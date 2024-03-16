@@ -1,0 +1,24 @@
+# Use an official Python runtime as a parent image
+FROM python:3.11.7-slim
+
+# Install system packages required for building Python packages
+RUN apt-get update -y && \
+    apt-get install -y krb5-config libkrb5-dev krb5-user build-essential
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy the current directory contents into the container at /app
+COPY . /app
+
+# Install any needed dependencies specified in requirements.txt
+RUN pip install -r requirements.txt
+
+# Make port 9000 available to the world outside this container
+EXPOSE 9000
+
+# Define environment variable
+ENV NAME World
+
+# Run app.py when the container launches
+CMD ["python", "app.py"]

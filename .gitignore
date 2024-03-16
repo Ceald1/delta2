@@ -1,0 +1,14 @@
+venv
+__pycache__
+*.cfg
+
+*venv*
+test.py
+test_sddl.txt
+*.zip
+*users.txt
+*.hash
+*.ccache
+tgs*
+*.log
+*.gss
