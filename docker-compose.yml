@@ -12,3 +12,10 @@ services:
     environment:
       - NAME=Delta2
     network_mode: "host"
+
+  memgraph:
+    image: memgraph/memgraph-platform
+    ports:
+      - "7687:7687"
+      - "7444:7444"
+      - "3000:3000"
