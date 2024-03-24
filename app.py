@@ -418,15 +418,6 @@ def st(target: Target, kerb: Kerberos, roast: Roast, st_data: ST_DATA):
 
 
 
-        # tgt = tgt.tgt
-        # tmp_file = "/tmp/temp_tgt"
-        # tmp_file = open(tmp_file, 'wb')
-        # tmp_file.write(base64.b64decode(tgt))
-        # cc = CCache()
-        # cc.loadFile(tmp_file)
-        # tgt = cc.getData()
-        # try:
-        #         h = ST(domain=domain, dc=dc, dc_ip=dc, username=user, tgt=cc)
 
 
 class Get_file(BaseModel):

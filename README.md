@@ -5,8 +5,9 @@ an active directory recon and exploitation tool that uses FastAPI for cloud poss
 
 
 ## Requirements
-1. Installed Memgraph
-2. Have docker or python 3.11.7+ installed, docker is recommended though
+Docker and Docker Compose
+<!-- 1. Installed Memgraph
+2. Have docker or python 3.11.7+ installed, docker is recommended though -->
 
 
 
@@ -15,9 +16,11 @@ neo4j is the industry standard but is also really slow compared to memgraph, mem
 
 
 ## Running Memgraph:
-~~~bash
+<!-- ~~~bash
 docker run -p 0.0.0.0:7687:7687 -p 0.0.0.0:7444:7444 -p 0.0.0.0:3000:3000 -name memgraphmemgraph/memgraph_platform
-~~~
+~~~ -->
+Memgraph is ran in the Docker Compose file, no need to run it separately now
+
 
 ## Running Delta2:
 ~~~bash
