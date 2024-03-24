@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('target', action='store', help='domain[/username[:password]]')
 parser.add_argument('-dc', help='dc ip', type=str,action="store")
 parser.add_argument('-hash', help="pass the hash", type=str, default=":")
-parser.add_argument('-no-preauth', action="store_true", help="does the user not require preauth, setting flag will make user NOT require it. set it to either 'True' if user does not have preauth")
+parser.add_argument('-no-preauth', action="store_true", help="does the user not require preauth, setting flag will make user NOT require it.")
 parser.add_argument("-s", action="store_true", help="save the hashes to a file named tgs_hashes.txt")
 
 options = parser.parse_args()

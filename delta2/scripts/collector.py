@@ -341,7 +341,7 @@ class Data_collection:
                 # certificate=None,
                 # lmhash=lmhash,
                 # nthash=nthash)
-                if lmhash and nthash or nthash:
+                if nthash:
                     password = f'{lmhash}:{nthash}'
                 config = Config(
                     scheme=protocol,
@@ -836,7 +836,6 @@ class Data_collection:
                 MERGE (a)-[:RemoteInto]->(b)
                 """
                 self.DB.custom_query(query=query, database=self.database)
-            
 
 
 
