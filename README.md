@@ -19,7 +19,7 @@ neo4j is the industry standard but is also really slow compared to memgraph, mem
 <!-- ~~~bash
 docker run -p 0.0.0.0:7687:7687 -p 0.0.0.0:7444:7444 -p 0.0.0.0:3000:3000 -name memgraphmemgraph/memgraph_platform
 ~~~ -->
-Memgraph is ran in the Docker Compose file, no need to run it separately now
+Memgraph is ran in the Docker Compose file, no need to run it separately now, you can still configure it to run memgraph in a standalone container if needed though through the API
 
 
 ## Running Delta2:
