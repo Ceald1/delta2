@@ -777,6 +777,7 @@ async def clear_db():
 
 
 if __name__ == '__main__':
+        from fastapi.middleware.cors import CORSMiddleware
         print(art)
         parser = argparse.ArgumentParser()
         parser.add_argument('-uri', help='memgraph host with port', type=str, default='bolt://localhost:7687',action="store")
@@ -791,4 +792,11 @@ if __name__ == '__main__':
         client = config_driver(DB_name=name, DB_uri=uri)
 
         #app.run(host, port, debug=True)
+        app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:9000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
         uvicorn.run(app, host=host, port=port)
