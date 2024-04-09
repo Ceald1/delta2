@@ -263,18 +263,6 @@ for path in response:
         attack.append({user: delegates})
         
 print(attack)
-# for rs in response:
-#     rs = rs['path1']
-#     for r in rs:
-#         if type(r) != str('a'):
-#             try:
-#                 if r['pwned'] == "True" and r['domain'] == domain:
-#                     user = r['name']
-#                     break
-#             except:
-#                 None
-    
-#     delegate_to = rs[-1]['name']
 
 
 for user_data in attack:
