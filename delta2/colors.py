@@ -37,3 +37,4 @@ class colors:
     BRIGHT_ORANGE = '\033[38;5;202m'
     ORANGE = '\033[38;5;208m'
     DARK_GREEN = '\033[32m'
+    BROWN = '\033[38;5;94m'
