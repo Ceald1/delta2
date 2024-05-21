@@ -1,14 +1,13 @@
-version: '3'
-
 services:
   delta2:
     build:
       context: .
       dockerfile: DOCKERFILE
+    user: "root"
     ports:
       - "9000:9000"
     volumes:
-      - .:/app
+      - app:/app
     environment:
       - NAME=Delta2
     network_mode: "host"
@@ -19,3 +18,8 @@ services:
       - "7687:7687"
       - "7444:7444"
       - "3000:3000"
+    user: "root"
+    volumes:
+      - app:/app
+volumes:
+  app:
