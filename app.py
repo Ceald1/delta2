@@ -9,6 +9,7 @@ import markdown.extensions.fenced_code
 from delta2.scripts.collector import Data_collection # Data collection
 from delta2.scripts.utils.tickets import TGS_no_preauth # Kerberoast with no preauth and asrep roast
 from fastapi import FastAPI, BackgroundTasks, UploadFile, HTTPException, Request
+from delta2.scripts.clients.mssql import MSSQL_Client
 from pydantic import BaseModel
 from typing import Optional, List
 import uvicorn
@@ -34,6 +35,10 @@ tags_metadata = [
         {
                 "name": "other",
                 "description": "Other"
+        },
+        {
+                "name": "mssql",
+                "description": "routes for mssql"
         }
 ]
 
@@ -654,8 +659,121 @@ def editobj(target: Target, kerb: Kerberos, ops: editor):
                 return {"response": f"error: {e}"}
 
 
-  
-        
+
+class MSSQL(BaseModel):
+        target_ip: str
+        domain: str
+        user_name: str
+        password: str=''
+        kerberos: str = "False"
+        aeskey: str=''
+        dc: str=''
+        dc_ip: str=''
+        kdcHost: str=''
+        DB: str = ""
+        nthash: str=''
+        lmhash: str=""
+        windows_auth: str = "False"
+        query: str = ""
+
+
+
+class XP(BaseModel):
+        op: str = "xp_cmdshell"
+        command: str = ""
+
+
+
+""" MSSQL """
+@app.post("/mssql/query", tags=['mssql'])
+async def mssql_query(q:MSSQL):
+        """
+        Run mssql query on target
+        """
+        target_ip = q.target_ip
+        domain = q.domain
+        user_name = q.user_name
+        password = q.password
+        kerberos = q.kerberos
+        aeskey = q.aeskey
+        dc = q.dc
+        dc_ip = q.dc_ip
+        kdcHost = q.kdcHost
+        DB = q.DB
+        nthash = q.nthash
+        lmhash = q.lmhash
+        windows_auth = q.windows_auth
+        query = q.query
+        if kerberos == "False":
+                kerberos = False
+        else:
+                kerberos = True
+        if windows_auth == "False":
+                windows_auth = False
+        else:
+                windows_auth = True
+
+        mssql = MSSQL_Client(target_ip=target_ip,domain=domain,user_name=user_name,password=password,kerberos=kerberos,aeskey=aeskey,dc=dc,dc_ip=dc_ip,kdcHost=kdcHost,DB=DB,nthash=nthash,lmhash=lmhash,windows_auth=windows_auth)
+        try:
+                data = mssql.query(query)
+                return {"response": data}
+        except Exception as a:
+                print(traceback.format_exc())
+                e = a
+                return {"response": f"error: {e}"}
+
+import inspect
+
+
+def get_class_methods(cls):
+    methods = {}
+    for name, member in inspect.getmembers(cls):
+        if inspect.isfunction(member) or inspect.ismethod(member):
+            methods[name] = member
+    return methods
+
+
+@app.post("/mssql/xp", tags=['mssql'])
+async def mssql_xp(xp:XP, q: MSSQL):
+        """
+        Execute xp_cmdshell, xp_dirtree, xp_fileexist, xp_regread, xp_regenumvalues, or xp_regenumkey commands on target
+        """
+        target_ip = q.target_ip
+        domain = q.domain
+        user_name = q.user_name
+        password = q.password
+        kerberos = q.kerberos
+        aeskey = q.aeskey
+        dc = q.dc
+        dc_ip = q.dc_ip
+        kdcHost = q.kdcHost
+        DB = q.DB
+        nthash = q.nthash
+        lmhash = q.lmhash
+        windows_auth = q.windows_auth
+        query = q.query
+        xp_op = xp.op
+        command = xp.command
+        if kerberos == "False":
+                kerberos = False
+        else:
+                kerberos = True
+        if windows_auth == "False":
+                windows_auth = False
+        else:
+                windows_auth = True
+        mssql = MSSQL_Client(target_ip=target_ip,domain=domain,user_name=user_name,password=password,kerberos=kerberos,aeskey=aeskey,dc=dc,dc_ip=dc_ip,kdcHost=kdcHost,DB=DB,nthash=nthash,lmhash=lmhash,windows_auth=windows_auth)
+        try:
+                data = get_class_methods(mssql)[xp_op](command)
+                
+                return {"response": data}
+        except Exception as e:
+                print(traceback.format_exc())
+                e = e
+                return {"response": f"error: {e}"}
+
+
+
 
 
 

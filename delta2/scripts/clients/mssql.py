@@ -3,11 +3,11 @@ from impacket.examples import mssqlshell
 from impacket.examples.utils import parse_target
 from impacket.tds import MSSQL
 import os, sys
-
+import inspect
 
 
 class MSSQL_Client:
-    def __init__(self,target_ip,domain, user_name, windows_auth=False,password='', lmhash="",nthash='', kerberos=None, kdcHost='', aeskey='', dc_ip=None, DB=None, dc=None):
+    def __init__(self,target_ip,domain, user_name, windows_auth=False,password='', lmhash="",nthash='', kerberos=False, kdcHost='', aeskey='', dc_ip=None, DB=None, dc=None):
         self.domain = domain
         self.user_name = user_name
         self.password = password
@@ -21,7 +21,7 @@ class MSSQL_Client:
         hashes = f'{lmhash}:{nthash}'
         self.mssql = MSSQL(address=target_ip, remoteName=target_ip)
         self.mssql.connect()
-        if kerberos != None:
+        if kerberos != False:
             self.mssql.kerberosLogin(database=DB, username=user_name, password=password, domain=domain, aesKey=aeskey, kdcHost=kdcHost, hashes=hashes)
         else:
             
@@ -68,7 +68,13 @@ class MSSQL_Client:
         return self.mssql.rows
     
 
-            
+def get_class_methods(cls):
+    methods = {}
+    for name, member in inspect.getmembers(cls):
+        if inspect.isfunction(member) or inspect.ismethod(member):
+            methods[name] = member
+    return methods
+
 if __name__ == '__main__':
     domain, username, password, remoteName = parse_target(sys.argv[1])
     try:
@@ -77,6 +83,9 @@ if __name__ == '__main__':
         database = None
 
     sql = MSSQL_Client(target_ip=remoteName,domain=domain, user_name=username, password=password)
+    m = get_class_methods(sql)['Get_databases']()
+    print(m)
+    
     databases = sql.Get_databases()
     if database == None:
         for database in databases:

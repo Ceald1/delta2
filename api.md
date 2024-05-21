@@ -451,6 +451,85 @@ add a resource-based constrained delegation to the target object, service is the
 
 
 
+## MSSQL
+### Querying
+Run querries against MSSQL.
+```JSON
+{
+  "target_ip": "string",
+  "domain": "string",
+  "user_name": "string",
+  "password": "",
+  "kerberos": "False",
+  "aeskey": "",
+  "dc": "",
+  "dc_ip": "",
+  "kdcHost": "",
+  "DB": "",
+  "nthash": "",
+  "lmhash": "",
+  "windows_auth": "False",
+  "query": ""
+}
+```
+* `target_ip` the target IP
+* `domain` the domain
+* `user_name` the username
+* `password` the password for the target (not required)
+* `kerberos` use Kerberos authentication, which can be either `"True"` or `"False"`
+* `aeskey` the aeskey for the target
+* `dc` domain controller hostname
+* `dc_ip` the domain controller IP (not required but recommended)
+* `kdcHost` the kerberos KDC host
+* `DB` the database name
+* `nthash` the NTLM hash for the user
+* `lmhash` the LM hash for the user
+* `windows_auth` use windows authentication, which can be either `"True"` or `"False"`
+* `query` the query to run
+
+### XP
+Execute xp_cmdshell, xp_dirtree, xp_fileexist, xp_regread, xp_regenumvalues, or xp_regenumkey commands on target
+```JSON
+{
+  "xp": {
+    "op": "xp_cmdshell",
+    "command": ""
+  },
+  "q": {
+    "target_ip": "string",
+    "domain": "string",
+    "user_name": "string",
+    "password": "",
+    "kerberos": "False",
+    "aeskey": "",
+    "dc": "",
+    "dc_ip": "",
+    "kdcHost": "",
+    "nthash": "",
+    "lmhash": "",
+    "windows_auth": "False",
+  }
+}
+```
+* `op` the command to run, can be either `"xp_cmdshell"`, `"xp_dirtree"`, `"xp_fileexist"`, `"xp_regread"`, `"xp_regenumvalues"`, or `"xp_regenumkey"`
+* `command` the command to run
+* `target_ip` the target IP
+* `domain` the domain
+* `user_name` the username
+* `password` the password for the target (not required)
+* `kerberos` use Kerberos authentication, which can be either `"True"` or `"False"`
+* `aeskey` the aeskey for the target
+* `dc` domain controller hostname
+* `dc_ip` the domain controller IP (not required but recommended)
+* `kdcHost` the kerberos KDC host
+* `nthash` the NTLM hash for the user
+* `lmhash` the LM hash for the user
+* `windows_auth` use windows authentication, which can be either `"True"` or `"False"`
+
+
+
+
+
 
 ## Scripting and Examples
 go to the examples folder to see examples of how to use the API.
