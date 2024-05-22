@@ -24,7 +24,7 @@ Memgraph is ran in the Docker Compose file, no need to run it separately now, yo
 
 ## Running Delta2:
 ~~~bash
-docker compose up
+bash ./run.sh
 ~~~
 
 
