@@ -345,6 +345,7 @@ class DATABASE:
                 attribute_info = attribute_info.replace('"', "")
                 attribute_info = attribute_info.replace('"', "")
                 attribute_name = attribute_name.replace('-', ' ')
+                attribute_name = attribute_name.replace(' ', '_')
                 records, summary, keys = self.client.execute_query(
 			f'''MATCH (c1) WHERE c1.name= "{node_name}" AND c1.domain= "{domain}" SET c1.{attribute_name} = "{attribute_info}" RETURN c1;''',
                         database=database
