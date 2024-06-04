@@ -1,5 +1,13 @@
 # API Docs
 
+## `/` route
+contains ascii art with colors for custom scripts so they're not plain and bland.
+
+
+## `/docs` route
+a better view of all routes
+
+
 
 ## Config
 ### Configurating memgraph
@@ -16,6 +24,40 @@ to execute system commands go to `/cmd` this is mainly meant for retrieving save
 curl "http://localhost:9000/cmd" --json '{
 "command": "ls -la /home"
 }'
+```
+### routes
+grabs all current routes that are available for the API, used for building CLIs or plugins for applications. Returns a dictionary containing a list of strings of available routes, example response:
+```json
+{
+  "response": [
+    "/openapi.json",
+    "/docs",
+    "/docs/oauth2-redirect",
+    "/redoc",
+    "/config",
+    "/cmd",
+    "/",
+    "/documentation",
+    "/kerberos/asrep",
+    "/kerberos/kerbroast",
+    "/kerberos/tgt",
+    "/kerberos/tgs",
+    "/kerberos/st",
+    "/kerberos/download_ticket",
+    "/kerberos/ticket_editor",
+    "/ldap/collect",
+    "/ldap/objeditor",
+    "/mssql/query",
+    "/mssql/xp",
+    "/graphing/query",
+    "/graphing/admin_paths",
+    "/graphing/kerberoastable",
+    "/graphing/asreproastable",
+    "/graphing/pwned",
+    "/graphing/clear",
+    "/routes"
+  ]
+}
 ```
 
 

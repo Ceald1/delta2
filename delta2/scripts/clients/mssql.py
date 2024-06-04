@@ -66,6 +66,8 @@ class MSSQL_Client:
     def enable_xp(self, xp):
         self.mssql.sql_query(f"""exec master.dbo.sp_configure 'show advanced options',1;RECONFIGURE;""exec master.dbo.sp_configure '{xp}', 1;RECONFIGURE;""")
         return self.mssql.rows
+    def close(self):
+        self.mssql.disconnect()
     
 
 def get_class_methods(cls):

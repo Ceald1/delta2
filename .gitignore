@@ -12,3 +12,4 @@ test_sddl.txt
 tgs*
 *.log
 *.gss
+exports

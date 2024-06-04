@@ -542,7 +542,6 @@ async def collect(target: Target, kerb: Kerberos):
         ntlm = kerb.user_hash
         lm = ntlm.split(":")[0]
         nt = ntlm.split(":")[-1]
-
         e =  "nil"
         aeskey = kerb.aeskey
         kerberos_auth = target.kerberos
@@ -721,6 +720,8 @@ async def mssql_query(q:MSSQL):
                 print(traceback.format_exc())
                 e = a
                 return {"response": f"error: {e}"}
+        finally:
+                mssql.close()
 
 import inspect
 
@@ -771,8 +772,10 @@ async def mssql_xp(xp:XP, q: MSSQL):
                 print(traceback.format_exc())
                 e = e
                 return {"response": f"error: {e}"}
+        finally:
+                mssql.close()
 
-
+""" SMB """
 
 
 
@@ -891,6 +894,18 @@ async def clear_db():
         """
         records, summary, keys = client.execute_query(query)
         return {"response": 0}
+
+
+
+@app.get("/routes", tags=['config'])
+async def routes():
+        """
+        returns all routes
+        """
+        routes = []
+        for route in app.routes:
+                routes.append(route.path)
+        return {"response": routes}
 
 
 
