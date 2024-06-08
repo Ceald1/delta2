@@ -374,9 +374,9 @@ class Data_collection:
                 #print(result)
                 if "uri" in result:
                     url = result['uri'][0]
-                    ldap_uri = url.split("/D")[0]
-                    ldap_uri = ldap_uri.split("/C")[0]
-                    url = url.replace('ldap://', '').replace('ldaps://', '').split("/")
+                    ldap_uri = url.split("/DC=")[0]
+                    ldap_uri = ldap_uri.split("/CN=")[0]
+                    url = url.replace('ldap://', '').replace('ldaps://', '').replace('ldap:/','').replace('ldaps:/','').split("/")
                     if len(url) > 1:
                         url = url[1]
                         dn = url.split(",")
