@@ -567,6 +567,7 @@ async def collect(target: Target, kerb: Kerberos):
                                 print(host)
                                 basedn = dn['baseDN']
                                 collector.root = basedn
+                                collector.domain = host
                                 #print("collecting users")
                                 collector.users()
                                 #print("collecting groups..")
@@ -583,7 +584,7 @@ async def collect(target: Target, kerb: Kerberos):
                                 collector.route_others()
                         except Exception as e:
                                 # # print(dn)
-                                # print(traceback.format_exc())
+                                print(traceback.format_exc())
                                 print(e)
                                 # print(dn)
                                 None
