@@ -558,20 +558,35 @@ async def collect(target: Target, kerb: Kerberos):
                 collector = Data_collection(domain=domain, password=password, 
         user_name=username,dc=dc, lmhash=lm,nthash=nt, kerberos=kerberos_auth, 
         database_uri=uri,ldap_ssl=ldap_ssl, kdcHost=dc_ip, aeskey=aeskey, dc_ip=dc_ip)
-                print("collecting users")
-                collector.users()
-                print("collecting groups..")
-                collector.groups()
-                print("collecting OUs")
-                collector.OUs()
-                print("connecting OUs")
-                collector.connect_OUs()
-                print("routing ACEs")
-                collector.route_ACEs()
-                print("Finding GMSAPassword abuse")
-                collector.ReadGMSAPassword()
-                print("routing others..")
-                collector.route_others()
+                dns = collector.search_forests()
+                # dns.append(collector.root)
+                for dn in dns:
+                        try:
+                                host = dn['uri'].replace("ldap://", "")
+                                host = host.replace("ldaps://", "")
+                                print(host)
+                                basedn = dn['baseDN']
+                                collector.root = basedn
+                                #print("collecting users")
+                                collector.users()
+                                #print("collecting groups..")
+                                collector.groups()
+                                #print("collecting OUs")
+                                collector.OUs()
+                                #print("connecting OUs")
+                                collector.connect_OUs()
+                                #print("routing ACEs")
+                                collector.route_ACEs()
+                                #print("Finding GMSAPassword abuse")
+                                collector.ReadGMSAPassword()
+                                print("routing others..")
+                                collector.route_others()
+                        except Exception as e:
+                                # # print(dn)
+                                # print(traceback.format_exc())
+                                print(e)
+                                # print(dn)
+                                None
                 return {"response": 0}
                 
         except Exception as a:

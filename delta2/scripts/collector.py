@@ -296,7 +296,7 @@ def format_dn(dn, name):
         return [groups[0]]
 
 class Data_collection:
-        def __init__(self, domain, user_name, dc, password='', lmhash="",nthash='', kerberos=None, database_uri='bolt://localhost:7687', ldap_ssl=False, kdcHost='', aeskey='', dc_ip=None):
+        def __init__(self, domain, user_name, dc, password='', lmhash="",nthash='', kerberos=None, database_uri='bolt://localhost:7687', ldap_ssl=False, kdcHost='', aeskey='', dc_ip=None, root=None, uri=None):
                 """ Collection script and class for delta2, gc stands for "Global Catalog connection" """
                 self.domain = domain
                 self.username= user_name
@@ -321,11 +321,12 @@ class Data_collection:
                     protocol = 'ldaps'
                 else:
                     protocol = 'ldap'
-                for d in data:
-                        if self.root == '':
-                                self.root = 'DC='+d
-                        else:
-                                self.root = self.root + ',DC=' + d
+                if root == None:
+                    for d in data:
+                            if self.root == '':
+                                    self.root = 'DC='+d
+                            else:
+                                    self.root = self.root + ',DC=' + d
                 if not kerberos:
                     kerberos = False
                 else:
@@ -343,9 +344,12 @@ class Data_collection:
                 # nthash=nthash)
                 if nthash:
                     password = f'{lmhash}:{nthash}'
+                host = dc_ip
+                if uri:
+                    host = uri
                 config = Config(
                     scheme=protocol,
-                    host=dc_ip,
+                    host=host,
                     domain=self.domain,
                     username=self.username,
                     password=password,
@@ -358,6 +362,31 @@ class Data_collection:
                 self.conn = ad.ldap
 
 
+
+
+
+        def search_forests(self):
+            """Searches for subdomains in the domain."""
+            query = '(&(objectClass=crossRef)(objectCategory=*))'
+            self.conn.search(search_base=self.root, search_filter=query, search_scope=SUBTREE)
+            
+            for result in self.conn.response:
+                #print(result)
+                if "uri" in result:
+                    url = result['uri'][0]
+                    ldap_uri = url.split("/D")[0]
+                    ldap_uri = ldap_uri.split("/C")[0]
+                    url = url.replace('ldap://', '').replace('ldaps://', '').split("/")
+                    if len(url) > 1:
+                        url = url[1]
+                        dn = url.split(",")
+                        dns = [d for d in dn if "DC=" in d]
+                        parsed = ",".join(dns)
+
+                        self.dns.append({"uri": ldap_uri, "baseDN": parsed})
+            
+            #print(self.dns)
+            return self.dns
 
 
         def users(self):
@@ -457,21 +486,23 @@ class Data_collection:
             """
             query = '(&(ObjectClass=msDS-GroupManagedServiceAccount))'
             #self.conn.search(search_base=self.root, search_filter=query, search_scope=SUBTREE, controls=sd_flags_control, attributes=PROPTERTIES)
-            e = None
-            e2 = None
+            e = False
+            e2 = False
             try:
                 prop = ['msDS-ManagedPassword', 'msDS-GroupMSAMembership']
                 prop += PROPTERTIES
                 self.conn.search(search_base=self.root, search_filter=query, search_scope=SUBTREE,attributes=prop, controls=sd_flags_control)
 
-            except Exception as e:
+            except Exception as error:
+                e = error
                 #print(f'e: {e}')
                 prop = ['msDS-ManagedPassword']
                 prop += PROPTERTIES
                 try:
                     self.conn.search(search_base=self.root, search_filter=query, search_scope=SUBTREE,attributes=prop,get_operational_attributes=True, controls=sd_flags_control)
-                except Exception as e2:
-                    print(f'e2: {e2}')
+                except Exception as exception2:
+                    print(f'e2: {exception2}')
+                    e2 = exception2
                     try:
                         self.conn.search(search_base=self.root, search_filter=query, search_scope=SUBTREE,attributes=PROPTERTIES,get_operational_attributes=True, controls=sd_flags_control)
                     except Exception as r:
@@ -484,13 +515,14 @@ class Data_collection:
                     keys = list(data.keys())
                     name =  data['sAMAccountName'][0]
                     if not e2:
+                        #print(data)
                         gmsa = data['msDS-ManagedPassword']
                     if not e:
                         gmsa_group = data['msDS-GroupMSAMembership']
                     sid = data['objectSid'][0]
                     #print(sid)
                     nts = data['nTSecurityDescriptor']
-                    print(gmsa)
+                    # print(gmsa)
                     rights_f = []
                     if not e:
                         perms = decode_msds_group_msamembership_sddl(gmsa_group)[0]
@@ -856,7 +888,6 @@ def return_OUs(DN):
             connected_OUs = final[1:]
     data = {'OU': f_name, 'Connected': connected_OUs}
     return data
-
 
 
 
