@@ -10,7 +10,8 @@ services:
       - app:/app
     environment:
       - NAME=Delta2
-    network_mode: "host"
+    networks: 
+      - "delta2_network"
 
   memgraph:
     image: memgraph/memgraph-platform
@@ -21,5 +22,10 @@ services:
     user: "root"
     volumes:
       - app:/app
+    networks: 
+      - "delta2_network"
 volumes:
   app:
+networks:
+  delta2_network:
+    driver: bridge

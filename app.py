@@ -929,7 +929,7 @@ if __name__ == '__main__':
         from fastapi.middleware.cors import CORSMiddleware
         print(art)
         parser = argparse.ArgumentParser()
-        parser.add_argument('-uri', help='memgraph host with port', type=str, default='bolt://localhost:7687',action="store")
+        parser.add_argument('-uri', help='memgraph host with port', type=str, default='bolt://memgraph:7687',action="store")
         parser.add_argument('-db_name', help='memgraph db name', type=str, default='memgraph',action="store")
         options = parser.parse_args()
 

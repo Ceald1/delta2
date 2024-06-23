@@ -1,5 +1,8 @@
 
 echo "starting and building containers...."
+
+docker network create delta2_network
+
 docker compose up --build -d
 
 
