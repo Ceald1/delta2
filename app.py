@@ -546,6 +546,7 @@ async def collect(target: Target, kerb: Kerberos):
         aeskey = kerb.aeskey
         kerberos_auth = target.kerberos
         ldap_ssl = target.ldap_ssl
+        aeskey = aeskey.encode()
         if kerberos_auth == "False":
                 kerberos_auth = None
         else:

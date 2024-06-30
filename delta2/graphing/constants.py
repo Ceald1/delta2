@@ -337,7 +337,8 @@ EXTENED_RIGHTS = {
     "440820ad-65b4-11d1-a3da-0000f875ae0d": "Add_GUID",
     "1abd7cf8-0a99-11d1-adbb-00c04fd8d5cd": "Allocate_Rids",
     "1131f6aa-9c07-11d1-f79f-00c04fc2dcd2": "DS_Replication_Get_Changes",
-    "89e95b76-444d-4c62-991a-0facbeda640c": "DS_Replication_Get_Changes_In_Filtered_Set"
+    "89e95b76-444d-4c62-991a-0facbeda640c": "DS_Replication_Get_Changes_In_Filtered_Set",
+    "bf9679a8-0de6-11d0-a285-00aa003049e2": "ScriptPath"
 }
 
 write_groups = [
