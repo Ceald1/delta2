@@ -558,7 +558,7 @@ async def collect(target: Target, kerb: Kerberos):
         try:
                 collector = Data_collection(domain=domain, password=password, 
         user_name=username,dc=dc, lmhash=lm,nthash=nt, kerberos=kerberos_auth, 
-        database_uri=uri,ldap_ssl=ldap_ssl, kdcHost=dc_ip, aeskey=aeskey, dc_ip=dc_ip)
+        database_uri=uri,ldap_ssl=ldap_ssl, kdcHost=dc_ip, dc_ip=dc_ip)
                 dns = collector.search_forests()
                 # dns.append(collector.root)
                 for dn in dns:

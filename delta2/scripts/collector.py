@@ -356,7 +356,7 @@ class Data_collection:
                     # lmhash=lmhash,
                     # nthash=nthash,
                     kerberos=kerberos,
-                    key=aeskey,
+                    # key=aeskey,
                 )
                 ad = ConnectionHandler(config=config)
                 self.conn = ad.ldap

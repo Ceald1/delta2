@@ -54,6 +54,7 @@ class TGT:
         self.lmhash = lmhash
         self.aeskey = aeskey
         self.dc_ip = dc_ip
+
         
         if dc_ip is None:
             self.dc_ip = socket.gethostbyname(self.dc)
@@ -62,7 +63,7 @@ class TGT:
 
 
     def run(self, save=False):
-        f"""setting save to True will save the tgt to the {f_name}.ccache"""
+        f"""setting save to True will save the tgt to the {self.username}.ccache"""
         
         clientName = Principal(self.username, type=constants.PrincipalNameType.NT_PRINCIPAL.value)
 
