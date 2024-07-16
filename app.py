@@ -18,7 +18,6 @@ from base64 import b64encode
 from delta2.ascii import random_art
 
 
-
 DEFAULT_QUERY = "MATCH (n) return n"
 
 tags_metadata = [
@@ -270,8 +269,8 @@ async def kerbroast(target: Target, kerb: Kerberos, roast: Roast):
                 no_preauth = True
         else:
                 no_preauth = False
-        tgs = TGS_no_preauth(domain=domain, dc=dc, username=target_user, password=password, nthash=nt, lmhash=lm, aeskey=aeskey, no_preauth=no_preauth, dc_ip=dc_ip)
         try:
+                tgs = TGS_no_preauth(domain=domain, dc=dc, username=target_user, password=password, nthash=nt, lmhash=lm, aeskey=aeskey, no_preauth=no_preauth, dc_ip=dc_ip)
                 h = tgs.run(nopreauth_user=user)
                 print(h)
         except Exception as a:
@@ -923,6 +922,71 @@ async def routes():
         for route in app.routes:
                 routes.append(route.path)
         return {"response": routes}
+
+
+""" ADCS Routes """
+from delta2.scripts.certs import create_target_var
+
+        # self.domain: str = None
+        # self.username: str = None
+        # self.password: str = None
+        # self.remote_name: str = None
+        # self.hashes: str = None
+        # self.lmhash: str = None
+        # self.nthash: str = None
+        # self.do_kerberos: bool = False
+        # self.use_sspi: bool = False
+        # self.aes: str = None
+        # self.dc_ip: str = None
+        # self.target_ip: str = None
+        # self.timeout: int = 5
+        # self.resolver: Resolver = None
+        # self.ldap_channel_binding = None
+
+from dns.resolver import Resolver
+
+
+class Certs(BaseModel):
+        domain: str
+        username: str
+        password: str = None
+        remote_name: str = None
+        hashes: str = None
+        lmhash: str = None
+        nthash: str = None
+        do_kerberos: bool = False
+        use_sspi: bool = False
+        dc_ip: str
+        target_ip: str
+        timeout: int = 5
+
+
+
+
+from delta2.scripts.certs import Templates
+@app.post("/adcs/templates")
+def get_templates(certs: Certs):
+        """
+        Get Templates for ADCS certificates
+        """
+        pass
+        certs.resolver = Resolver
+        certs.ldap_channel_binding = None
+        tagert = create_target_var(**certs.dict())
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

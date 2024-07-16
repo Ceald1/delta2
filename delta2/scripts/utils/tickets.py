@@ -41,7 +41,8 @@ except ImportError:
     
 
 from uuid import uuid4
-
+from impacket.krb5.kerberosv5 import getKerberosTGT as impacketTGT
+from impacket.krb5.kerberosv5 import getKerberosTGS as impacketTGS
 
 
 class TGT:
@@ -159,7 +160,6 @@ def getName(machine):
     s = SMBConnection(machine, machine)
     return s.getServerName()
 
-
 class TGS_no_preauth:
     def __init__(self, domain, dc, username, password='', nthash='', lmhash='', aeskey='', no_preauth=True, dc_ip=None) -> None:
         """username is the targeted username"""
@@ -197,7 +197,7 @@ class TGS_no_preauth:
     def outputTGS(self, ticket,oldSessionKey, sessionKey, fd=None):
         username = self.username
         spn = self.domain + '/' + username
-        if self.no_preauth:
+        if self.no_preauth == True:
             decodedTGS = decoder.decode(ticket, asn1Spec=AS_REP())[0]
         else:
             decodedTGS = decoder.decode(ticket, asn1Spec=TGS_REP())[0]
@@ -359,8 +359,7 @@ class GetTGT:
 
 
 
-from impacket.krb5.kerberosv5 import getKerberosTGT as impacketTGT
-from impacket.krb5.kerberosv5 import getKerberosTGS as impacketTGS
+
 
 class TGS:
     def __init__(self, domain, dc, username,password='', nthash='', lmhash='', aeskey='', dc_ip=None, no_preauth=True) -> None:
