@@ -964,7 +964,7 @@ class Certs(BaseModel):
 
 
 from delta2.scripts.certs import Templates
-@app.post("/adcs/templates")
+@app.post("/adcs/get_templates")
 def get_templates(certs: Certs):
         """
         Get Templates for ADCS certificates
