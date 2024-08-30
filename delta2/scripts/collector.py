@@ -34,7 +34,7 @@ PROPTERTIES = ['servicePrincipalName', 'userAccountControl', 'displayName',
                            'description', 'userPassword', 'adminCount', 'sIDHistory',
                            'whencreated', 'unicodepwd', 'scriptpath','sAMAccountName', 'distinguishedName', 'sAMAccountType',
                             'objectSid', 'primaryGroupID', 'isDeleted','nTSecurityDescriptor', 'unixuserpassword', 'memberOf', 'ntSecurityDescriptor',
-                             'msDS-AllowedToDelegateTo', 'objectGUID']
+                             'msDS-AllowedToDelegateTo', 'objectGUID',"msDS-AllowedToActOnBehalfOfOtherIdentity"]
 
 
 GROUPproperties = ['distinguishedName', 'samaccountname', 'samaccounttype', 'objectsid', 'member', 'description', 'nTSecurityDescriptor', 'adminCount', 'memberOf']
@@ -54,6 +54,7 @@ ldap_server_kwargs = {
                 "nTSecurityDescriptor": formatSD,
                 "msDS-AllowedToActOnBehalfOfOtherIdentity": formatSD,
                 "msDS-Behavior-Version": formatFunctionalLevel,
+                "AllowedToActOnBehalfOfOtherIdentity":formatSD,
                 "objectVersion": formatSchemaVersion,
                 "userAccountControl": formatAccountControl,
                 "msDS-User-Account-Control-Computed": formatAccountControl,
@@ -283,6 +284,56 @@ def extract_groups_from_member_of(member_of):
 
 
 
+def rbcd_sddl_parser(sddl_string):
+    """
+    Parse the SDDL string to extract permissions for `msDS_AllowedToActOnBehalfOfOtherIdentity`.
+    
+    Args:
+        sddl_string (str): The SDDL string.
+        
+    Returns:
+        dict: A dictionary containing relevant permissions.
+    """
+    # acl_info = {
+    #     'allowed_to_act_on_behalf': []
+    # }
+    sddl_1 = str(sddl_string.split(':'))
+    sddl_2 = str(sddl_1.split(";")[2:])
+    sddl_3 = sddl_2.split("(A")
+    final_list = []
+    items = []
+    perm_list = []
+    for sds in sddl_3:
+        sds = sds.replace(')', '')
+        sds = sds.split(",")
+        for sd in sds:
+            sd = sd.replace(" ", '')
+            sd = sd.replace("[", '')
+            sd = sd.replace(']', '')
+            sd = sd.replace('"', '')
+            sd = sd.replace("'", '')
+            if sd != '' or len(sd) > 2:
+                items.append(sd)
+    for i in range(0, len(items), 2):
+        pair = items[i:i+2]
+        pair_dict = {pair[1]: []}
+        pair[0] = int(pair[0][2:],16)
+        ks = list(constants.HEX_PERMISSIONS)
+        for k in ks:
+            if pair[0] & k != 0:
+                pair_dict[pair[1]].append(constants.HEX_PERMISSIONS[k])
+        perm_list.append(pair_dict)
+    #print(final_list)
+        
+                
+
+    #print(sddl_3)
+
+
+    
+    return perm_list
+
+
 def format_dn(dn, name):
         parts = dn.split(',')
         cn_values = [part.strip()[3:] for part in parts if part.strip().startswith('CN=')]
@@ -458,6 +509,22 @@ class Data_collection:
                                     k = "Delegateto"
                                     self.DB.add_node(name=name, t='delegate', domain=self.domain, database=self.database, typ="Delegate")
                                     self.DB.add_edge_from_name(starting_node=user, end_node=name, database=self.database, attribute=k, domain=self.domain)
+                                if key == "AllowedToActOnBehalfOfOtherIdentity" or key == "msDS-AllowedToActOnBehalfOfOtherIdentity":
+                                    k = key.lower()
+                                    k = k.replace("-", "")
+                                    k = "AllowedToActOnBehalfOfOtherIdentity"
+                                    #print(d)
+                                    aces = rbcd_sddl_parser(d)
+                                    
+                                    for ace in aces:
+                                        sid = list(ace.keys())[0]
+                                        d = sid.replace("-",'_')
+                                        perms = f"""{str(ace[sid]).replace(" ",'').replace("-",'_')}"""
+                                        print(perms)
+                                        self.DB.add_node(name=d, t='delegate', domain=self.domain, database=self.database, typ="Delegate")
+                                        self.DB.add_edge_from_name(starting_node=user, end_node=d, database=self.database, attribute="AllowedToActOnBehalfOfOtherIdentity", domain=self.domain)
+                                        self.DB.add_attributes_to_node(node_name=d, domain=self.domain, attribute_name='rights', attribute_info=perms, database=self.database)
+
 
 
 
