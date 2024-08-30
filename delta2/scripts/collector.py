@@ -522,7 +522,7 @@ class Data_collection:
                                         perms = f"""{str(ace[sid]).replace(" ",'').replace("-",'_')}"""
                                         print(perms)
                                         self.DB.add_node(name=d, t='delegate', domain=self.domain, database=self.database, typ="Delegate")
-                                        self.DB.add_edge_from_name(starting_node=user, end_node=d, database=self.database, attribute="AllowedToActOnBehalfOfOtherIdentity", domain=self.domain)
+                                        self.DB.add_edge_from_name(starting_node=d, end_node=user, database=self.database, attribute="AllowedToActOnBehalfOfOtherIdentity", domain=self.domain)
                                         self.DB.add_attributes_to_node(node_name=d, domain=self.domain, attribute_name='rights', attribute_info=perms, database=self.database)
 
 
