@@ -935,6 +935,11 @@ class Data_collection:
                 MERGE (a)-[:RemoteInto]->(b)
                 """
                 self.DB.custom_query(query=query, database=self.database)
+            query = """
+            MATCH p1=(a:Delegate)-[b]->(c)
+            MATCH (d) WHERE d.objectSid = replace(a.name, "_", '-') MERGE (a)<-[:sid]-(d)
+            """
+            self.DB.custom_query(query=query, database=self.database)
 
 
 
