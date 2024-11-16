@@ -10,6 +10,8 @@ from delta2.scripts.collector import Data_collection # Data collection
 from delta2.scripts.utils.tickets import TGS_no_preauth # Kerberoast with no preauth and asrep roast
 from fastapi import FastAPI, BackgroundTasks, UploadFile, HTTPException, Request
 from delta2.scripts.clients.mssql import MSSQL_Client
+from delta2.scripts.clients.smb import SMB as SMB_CLIENT
+from delta2.scripts.clients.winrm import WINRM
 from pydantic import BaseModel
 from typing import Optional, List
 import uvicorn
@@ -38,6 +40,10 @@ tags_metadata = [
         {
                 "name": "mssql",
                 "description": "routes for mssql"
+        },
+        {
+                "name": "smb",
+                "description": "routes for smb"
         }
 ]
 
@@ -792,6 +798,108 @@ async def mssql_xp(xp:XP, q: MSSQL):
                 mssql.close()
 
 """ SMB """
+class SMB(BaseModel):
+        target_ip: str
+        share: str
+        path: str
+
+@app.post("/smb/list_shares", tags=["smb"])  # TODO: Test code
+async def shares(smb_model: SMB, target: Target, auth: Kerberos):
+        """ list SMB shares """
+        kerberos_auth = target.kerberos
+        lm = auth.user_hash.split(":")[0]
+        nt = auth.user_hash.split(":")[-1]
+        if kerberos_auth == "False":
+                kerberos_auth = False
+        else:
+                kerberos_auth = True
+        
+        try:
+                smb_conn = SMB_CLIENT(target_ip=smb_model.target_ip,domain=target.domain, user_name=target.user_name, password=auth.password, lmhash=lm,nthash=nt, kerberos=kerberos_auth, kdcHost=target.dc_ip, aeskey=auth.aeskey, dc_ip=target.dc_ip, dc=target.dc)
+                known_shares = smb_conn.list_shares()
+                return {"response": known_shares}
+        except Exception as e:
+                return {"response":e}
+
+
+@app.post("/smb/get_file_contents", tags=['smb']) # TODO: Test code
+async def get_file(smb_model: SMB, target: Target, auth: Kerberos):
+        """ Get file contents from SMB returns as base64 encoded to prevent errors """
+        kerberos_auth = target.kerberos
+        lm = auth.user_hash.split(":")[0]
+        nt = auth.user_hash.split(":")[-1]
+        share = smb_model.share
+        path = smb_model.path
+        if kerberos_auth == "False":
+                kerberos_auth = False
+        else:
+                kerberos_auth = True
+        
+        try:
+                smb_conn = SMB_CLIENT(target_ip=smb_model.target_ip,domain=target.domain, user_name=target.user_name, password=auth.password, lmhash=lm,nthash=nt, kerberos=kerberos_auth, kdcHost=target.dc_ip, aeskey=auth.aeskey, dc_ip=target.dc_ip, dc=target.dc)
+                file_contents = smb_conn.get_file_contents(share=share,path=path)
+                encoded_contents = base64.b64encode(file_contents).decode()
+                return {"response": encoded_contents}
+        except Exception as e:
+                return {"response":e}
+
+@app.post("/smb/list_dirs", tags=['smb']) # TODO: Test code
+async def get_dirs(smb_model: SMB, target: Target, auth: Kerberos):
+        """ Get directories in an SMB share """
+        kerberos_auth = target.kerberos
+        lm = auth.user_hash.split(":")[0]
+        nt = auth.user_hash.split(":")[-1]
+        share = smb_model.share
+        path = smb_model.path
+        if kerberos_auth == "False":
+                kerberos_auth = False
+        else:
+                kerberos_auth = True
+        
+        try:
+                smb_conn = SMB_CLIENT(target_ip=smb_model.target_ip,domain=target.domain, user_name=target.user_name, password=auth.password, lmhash=lm,nthash=nt, kerberos=kerberos_auth, kdcHost=target.dc_ip, aeskey=auth.aeskey, dc_ip=target.dc_ip, dc=target.dc)
+                dirs = smb_conn.list_dirs(share=share, path=path)
+                return {"response": dirs}
+        except Exception as e:
+                return {"response":e}
+
+
+
+class Winrm(BaseModel):
+        target_ip: str
+        command: str
+        ssl: str = "false"
+
+""" Winrm """
+@app.post("/winrm/cmd", tags=['winrm']) # TODO: Test code
+async def get_dirs(winrm_model: Winrm, target: Target, auth: Kerberos):
+        """ Get directories in an SMB share """
+        kerberos_auth = target.kerberos
+        lm = auth.user_hash.split(":")[0]
+        nt = auth.user_hash.split(":")[-1]
+        target_ip = winrm_model.target_ip
+        command = winrm_model.command
+        if kerberos_auth == "False":
+                kerberos_auth = False
+        else:
+                kerberos_auth = True
+        if winrm_model.ssl == "true":
+                ssl = True
+        else:
+                ssl = False
+        try:
+                winrm_conn = WINRM(target_ip=smb_model.target_ip,domain=target.domain, user_name=target.user_name, password=auth.password, lmhash=lm,nthash=nt, kerberos=kerberos_auth, kdcHost=target.dc_ip, aeskey=auth.aeskey, dc_ip=target.dc_ip, dc=target.dc, ssl=ssl)
+                output = winrm_conn.command(command)
+                return {"response": output}
+        except Exception as e:
+                return {"response": e}
+
+
+
+
+
+
+
 
 
 

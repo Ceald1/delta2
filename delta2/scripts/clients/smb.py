@@ -16,19 +16,34 @@ class SMB:
         hashes = f'{lmhash}:{nthash}'
         self.smb = SMBConnection(target_ip, target_ip)
         if kerberos != False:
-            self.smb.kerberosLogin(user=user_name, password=password, domain=domain, aesKey=aeskey, kdcHost=kdcHost, nthash=nthash, lmhash=lmhash, kdcHost=kdcHost)
+            self.smb.kerberosLogin(user=user_name, password=password, domain=domain, aesKey=aeskey, kdcHost=kdcHost, nthash=nthash, lmhash=lmhash)
         else:
             
             self.smb.login(user=user_name, password=password, domain=domain, lmhash=lmhash, nthash=nthash)
     
     def list_shares(self):
-        return self.smb.listShares()
+        shares = self.smb.listShares()
+        parsed_shares = []
+        for share in shares:
+            share_name =  share['shi1_netname'][:-1]
+            remark = share['shi1_remark'][:-1]
+            
+            parsed_shares.append({"name":share_name, "remark":remark})
+        return parsed_shares
     
-    def get_file_contents(self,share,path):
-        return self.smb.getFile(share,path)
+
+    def get_file_contents(self,share,path) -> bytearray:
+        databuff = bytearray()
+        def callback_fun(data):
+            databuff.extend(data)
+
+
+        data = self.smb.getFile(share,path, callback=callback_fun)
+        return databuff
     
     def list_dirs(self, share, path):
-        return self.smb.listPath(share, path)
+        dirs = self.smb.listPath(share, path + "*")
+        return dirs
     
     def close(self):
         self.smb.close()
