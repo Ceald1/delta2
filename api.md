@@ -1,4 +1,6 @@
 # API Docs
+## Note:
+API documentation only contains working and documentated routes
 
 ## `/` route
 contains ascii art with colors for custom scripts so they're not plain and bland.
@@ -49,6 +51,10 @@ grabs all current routes that are available for the API, used for building CLIs 
     "/ldap/objeditor",
     "/mssql/query",
     "/mssql/xp",
+    "/smb/list_shares",
+    "/smb/get_file_contents",
+    "/smb/list_dirs",
+    "/winrm/cmd",
     "/graphing/query",
     "/graphing/admin_paths",
     "/graphing/kerberoastable",
@@ -569,12 +575,154 @@ Execute xp_cmdshell, xp_dirtree, xp_fileexist, xp_regread, xp_regenumvalues, or 
 * `windows_auth` use windows authentication, which can be either `"True"` or `"False"`
 
 
+## SMB
+### list_shares
+list smb shares, returns a list of dictionaries with the share name and share description.
+```json
+{
+    "target": {
+    "domain": "string",
+    "dc": "string",
+    "kerberos": "False",
+    "ldap_ssl": "False",
+    "user_name": "",
+    "dc_ip": ""
+  },
+  "kerb": {
+    "password": "",
+    "user_hash": ":",
+    "aeskey": ""
+  },
+  "smb_model": {
+    "target_ip": "string"
+  }
+}
+```
+* `target_ip` the target IP
+* `domain` the target domain
+* `dc` domain controller hostname
+* `user_name` the username
+* `dc_ip` the domain controller IP (not required but recommended)
+* `password` the password for the target (not required)
+* `user_hash` the hash for the user in the format: `lm:nt` (not required)
+* `aeskey` the aeskey for the target
+* `kerberos` use Kerberos authentication, which can be either `"True"` or `"False"`
+
+### get_file_contents
+returns base64 encoded file contents to prevent errors when sending response
+```json
+{
+    "target": {
+    "domain": "string",
+    "dc": "string",
+    "kerberos": "False",
+    "ldap_ssl": "False",
+    "user_name": "",
+    "dc_ip": ""
+  },
+  "kerb": {
+    "password": "",
+    "user_hash": ":",
+    "aeskey": ""
+  },
+  "smb_model": {
+    "target_ip": "string",
+    "share": "string",
+    "path": "string"
+  }
+}
+```
+* `target_ip` the target IP
+* `domain` the target domain
+* `dc` domain controller hostname
+* `user_name` the username
+* `dc_ip` the domain controller IP (not required but recommended)
+* `password` the password for the target (not required)
+* `user_hash` the hash for the user in the format: `lm:nt` (not required)
+* `aeskey` the aeskey for the target
+* `kerberos` use Kerberos authentication, which can be either `"True"` or `"False"`
+* `share` is the name of the share
+* `path` is the path to the file, ex: `\\Users\Administrator\something.txt`
+
+
+### list_dirs
+list directories inside a share. Returns a list of directories and files inside the share/directory
+```json
+{
+    "target": {
+    "domain": "string",
+    "dc": "string",
+    "kerberos": "False",
+    "ldap_ssl": "False",
+    "user_name": "",
+    "dc_ip": ""
+  },
+  "kerb": {
+    "password": "",
+    "user_hash": ":",
+    "aeskey": ""
+  },
+  "smb_model": {
+    "target_ip": "string",
+    "share": "string",
+    "path": "string"
+  }
+}
+```
+* `target_ip` the target IP
+* `domain` the target domain
+* `dc` domain controller hostname
+* `user_name` the username
+* `dc_ip` the domain controller IP (not required but recommended)
+* `password` the password for the target (not required)
+* `user_hash` the hash for the user in the format: `lm:nt` (not required)
+* `aeskey` the aeskey for the target
+* `kerberos` use Kerberos authentication, which can be either `"True"` or `"False"`
+* `share` is the name of the share
+* `path` is the path to the directory
+
+## Winrm
+### cmd
+run a winrm command, returns output as string.
+```json
+{
+    "target": {
+    "domain": "string",
+    "dc": "string",
+    "kerberos": "False",
+    "ldap_ssl": "False",
+    "user_name": "",
+    "dc_ip": ""
+  },
+  "kerb": {
+    "password": "",
+    "user_hash": ":",
+    "aeskey": ""
+  },
+  "winrm_model": {
+    "target_ip": "string",
+    "command": "string",
+    "ssl": "false"
+  }
+}
+```
+* `target_ip` the target IP
+* `domain` the target domain
+* `dc` domain controller hostname
+* `user_name` the username
+* `dc_ip` the domain controller IP (not required but recommended)
+* `password` the password for the target (not required)
+* `user_hash` the hash for the user in the format: `lm:nt` (not required)
+* `aeskey` the aeskey for the target
+* `kerberos` use Kerberos authentication, which can be either `"True"` or `"False"`
+* `command` powershell command to run
+* `ssl` SSL? Either "true" or "false"
 
 
 
 
 ## Scripting and Examples
-go to the examples folder to see examples of how to use the API.
+go to the 'examples' folder to see examples of how to use the API.
 
 ```bash
 ./examples/

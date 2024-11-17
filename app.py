@@ -1033,23 +1033,11 @@ async def routes():
 
 
 """ ADCS Routes """
-from delta2.scripts.certs import create_target_var
+from delta2.scripts.adcs.template import Template
+from delta2.scripts.adcs.ca import CA 
+from certipy.lib.target import Target
+from delta2.scripts.adcs.ldap import Connection
 
-        # self.domain: str = None
-        # self.username: str = None
-        # self.password: str = None
-        # self.remote_name: str = None
-        # self.hashes: str = None
-        # self.lmhash: str = None
-        # self.nthash: str = None
-        # self.do_kerberos: bool = False
-        # self.use_sspi: bool = False
-        # self.aes: str = None
-        # self.dc_ip: str = None
-        # self.target_ip: str = None
-        # self.timeout: int = 5
-        # self.resolver: Resolver = None
-        # self.ldap_channel_binding = None
 
 from dns.resolver import Resolver
 
@@ -1071,17 +1059,25 @@ class Certs(BaseModel):
 
 
 
-from delta2.scripts.certs import Templates
+# Example code for templates:
+#     target = Target()
+#     dc_ip = "10.10.10.11"
+#     domain = "testme.local"
+#     username = "administrator"
+#     hashes = "aaaaaa:aaaaaaaaaa"
+#     ns = "testme.local"
+#     target = target.create(domain=domain, username=username, hashes=hashes, target_ip=dc_ip, dc_ip=dc_ip, ns=dc_ip)
+#     connection = Connection(target=target)
+#     template = Template(connection=connection, template="superTemplate")
+#     config = template.get_config("superTemplate")
+#     json_data = template.to_json(dict(config))
+#     normal_data = template.load_json(json_data)
 @app.post("/adcs/get_templates")
 def get_templates(certs: Certs):
         """
         Get Templates for ADCS certificates
         """
         pass
-        certs.resolver = Resolver
-        certs.ldap_channel_binding = None
-        tagert = create_target_var(**certs.dict())
-
 
 
 
