@@ -1,4 +1,4 @@
-""" File containing classes for AD CS """
+
 
 import ldap3
 from certipy.lib.ldap import LDAPConnection, LDAPEntry
