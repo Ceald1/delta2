@@ -1043,18 +1043,7 @@ from dns.resolver import Resolver
 
 
 class Certs(BaseModel):
-        domain: str
-        username: str
-        password: str = None
-        remote_name: str = None
-        hashes: str = None
-        lmhash: str = None
-        nthash: str = None
-        do_kerberos: bool = False
-        use_sspi: bool = False
-        dc_ip: str
-        target_ip: str
-        timeout: int = 5
+        pass
 
 
 

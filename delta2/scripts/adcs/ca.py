@@ -883,7 +883,7 @@ class CA:
 
             pfx_out = "%s.pfx" % common_name.value
             
-            data = bytes.hex(pfx)
+            data = bytearray(pfx)
             # with open(pfx_out, "wb") as f:
             #     f.write(pfx)
             # logging.info("Saved certificate and private key to %s" % repr(pfx_out))

@@ -14,3 +14,4 @@ tgs*
 *.gss
 exports
 app
+.mypy_cahce
