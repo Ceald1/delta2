@@ -12,7 +12,7 @@ Docker and Docker Compose
 
 
 ## Why Memgraph and Not Neo4j? 
-neo4j is the industry standard but is also really slow compared to memgraph, memgraph is an in_memory graphing database but uses the same bolt protocol and querying language as neo4j. The limit is your RAM. There might be neo4j integration or fork in the future.
+neo4j is the industry standard but is also really slow compared to memgraph, memgraph is an in-memory graphing database but uses the same bolt protocol and querying language as neo4j. The limit is your RAM. There might be neo4j integration or fork in the future.
 
 
 ## Running Memgraph:

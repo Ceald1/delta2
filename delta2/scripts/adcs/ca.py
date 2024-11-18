@@ -884,9 +884,9 @@ class CA:
             pfx_out = "%s.pfx" % common_name.value
             
             data = bytearray(pfx)
-            # with open(pfx_out, "wb") as f:
-            #     f.write(pfx)
-            # logging.info("Saved certificate and private key to %s" % repr(pfx_out))
+            with open(pfx_out, "wb") as f:
+                f.write(pfx)
+            print("Saved certificate and private key to %s" % repr(pfx_out))
         except Exception as e1:
             exceptions.append(Exception("Backup failed: %s" % e1))
         

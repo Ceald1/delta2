@@ -1,9 +1,9 @@
 # API Docs
 ## Note:
-API documentation only contains working and documentated routes
+API documentation only contains working and documented routes
 
 ## `/` route
-contains ascii art with colors for custom scripts so they're not plain and bland.
+contains ASCII art with colors for custom scripts, so they're not plain and bland.
 
 
 ## `/docs` route
@@ -12,8 +12,8 @@ a better view of all routes
 
 
 ## Config
-### Configurating memgraph
-to configure the location for memgraph to be used as the database go to `/config` route on the api, only supports POST reuqests and is defaulted to the database uri, `bolt://localhost:7687` and the database name: `memgraph`, an example request goes as follows:
+### Configuration Memgraph
+to configure the location for Memgraph to be used as the database go to `/config` route on the api, only supports POST requests and is defaulted to the database URI, `bolt://localhost:7687` and the database name: `memgraph`, an example request goes as follows:
 ```bash
 curl -X POST "http://localhost:9000/config" --json '{"name": "memgraph", "uri": "bolt://localhost:7687"}'
 ```
@@ -139,10 +139,10 @@ If you look at the `/docs` route of the API you'll see a bunch of other options 
 * `domain` the target domain
 * `dc` the domain controller host
 * `user_name` the username for the targeted user
-* `dc_ip` the IP for the domain controller (recommended to be used)
+* `dc_ip` the IP for the domain controller (recommended being used)
 * `get_hash` set either to `"True"` to get the hash in the output or `"False"` to only see if it is vulnerable, will return with `"Vulnerable"` 
 
-in the `"asrep_data"` JSON response or the hash if the account is vulnerable. if there is an error it is returned in the `"asrep_data"` json response. An example response:
+In the `"asrep_data"` JSON response or the hash if the account is vulnerable. If there is an error it is returned to the `"asrep_data"` JSON response. An example response:
 ```json
 {
     "user":user_name, 
@@ -172,7 +172,7 @@ Kerberoasting is doable when a user has an SPN set (service principal name), the
 * `domain` the target domain
 * `dc` the domain controller host
 * `user_name` the username for the targeted user
-* `dc_ip` the IP for the domain controller (recommended to be used)
+* `dc_ip` the IP for the domain controller (recommended being used)
 * `get_hash` set either to `"True"` to get the hash in the output or `"False"` to only see if it is vulnerable, will return with `"Vulnerable"` 
 
 in the `"kerb_data"` JSON response or the hash if the account is vulnerable. if there is an error it is returned in the `"kerb_data"` json response. An example response:
@@ -184,7 +184,7 @@ in the `"kerb_data"` JSON response or the hash if the account is vulnerable. if 
 ```
 
 ### TGTs
-To grab a TGT of a specific user, go to `/kerberos/tgt` it will output a ccache file encoded in base64. The JSON required:
+To grab a TGT of a specific user, go to `/kerberos/tgt` it will output a CCache file encoded in base64. The JSON required:
 ```json
 {
   "target": {
@@ -348,7 +348,7 @@ uses nearly the same options as impacket's ticketer.py
 * `user_sid` the sids in the ticket
 * `target_user` the target user
 * `groups` the groups that the user belongs to or will belong to
-* `user_id` the id for user the ticket is created for
+* `user_id` the ID for user the ticket is created for
 * `impersonate` the user to impersonate (only for sapphire tickets)
 * `request_ticket` request a ticket (`"true"` or `"false"`)?
 
