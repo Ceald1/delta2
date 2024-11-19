@@ -727,6 +727,30 @@ run a winrm command, returns output as string.
 * `command` powershell command to run
 * `ssl` SSL? Either "true" or "false"
 
+## AD CS
+Yes you heard that right. Even I still don't believe I decided to go through the pain of implementing this. Thankfully most of the code is copied from Certipy. Certipy repo: https://github.com/ly4k/Certipy.git for these you get curl commands. If you don't know what an option does just go to the Certipy source code or read the docs for AD CS
+
+### get_templates
+get certificate templates:
+```bash
+curl -X 'POST' \
+  'http://localhost:9000/adcs/get_templates' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "dc_ip": "10.10.10.1",
+  "domain": "dc.local",
+  "username": "administrator",
+  "hashes": "aaaaa:aaaaaaaaa",
+  "password": "",
+  "ns": "10.10.10.1",
+  "kerberos": "False",
+  "target_ip": "10.10.10.1",
+  "scheme": "ldaps",
+  "vulnerable": "True",
+  "dc_only": "False"
+}' | jq
+```
 
 
 

@@ -77,6 +77,7 @@ class Find:
                 ):
             self.bloodhound = False
             self.old_bloodhound = False
+            self.connection_obj = connection
             self.connection = connection.connection
             self.text = text or stdout
             self.stdout = stdout
@@ -87,6 +88,8 @@ class Find:
             self.dc_only = dc_only
             self.scheme = scheme
             self.verbose = False
+            self.target = target
+            self.json = json
 
     def open_remote_registry(self, target_ip: str, dns_host_name: str):
 
@@ -179,7 +182,7 @@ class Find:
                         ca_target.remote_name = ca_remote_name
                         ca_target.target_ip = ca_target_ip
 
-                        ca_service = CA(ca_target, ca=ca_name)
+                        ca_service = CA(ca_target, ca=ca_name, connection=self.connection_obj)
                         edit_flags, request_disposition, interface_flags, security = ca_service.get_config()
 
                         if request_disposition:

@@ -572,4 +572,171 @@ class Request:
         else:
             self._interface = RPCRequestInterface(self)
         return self._interface
+
+    def retrieve(self) -> bool:
+        request_id = int(self.request_id)
+
+        cert = self.interface.retrieve(request_id)
+        if cert is False:
+            print("Failed to retrieve certificate")
+            return False
+
+        identifications = get_identifications_from_certificate(cert)
+
+        print_certificate_identifications(identifications)
+
+        object_sid = get_object_sid_from_certificate(cert)
+        if object_sid is not None:
+            print("Certificate object SID is %s" % repr(object_sid))
+        else:
+            print("Certificate has no object SID")
+
+        out = self.out
+        if out is None:
+            out, _ = cert_id_to_parts(identifications)
+            if out is None:
+                out = self.target.username
+
+            out = out.rstrip("$").lower()
+
+        try:
+            with open("%d.key" % request_id, "rb") as f:
+                key = pem_to_key(f.read())
+        except Exception as e:
+            print(
+                "Could not find matching private key. Saving certificate as PEM"
+            )
+            with open("%s.crt" % out, "wb") as f:
+                f.write(cert_to_pem(cert))
+
+            print("Saved certificate to %s" % repr("%s.crt" % out))
+        else:
+            print("Loaded private key from %s" % repr("%d.key" % request_id))
+            pfx = create_pfx(key, cert)
+            with open("%s.pfx" % out, "wb") as f:
+                f.write(pfx)
+            print(
+                "Saved certificate and private key to %s" % repr("%s.pfx" % out)
+            )
+
+        return True
+
+    def request(self) -> bool:
+        username = self.target.username
+
+        if sum(map(bool, [self.archive_key, self.on_behalf_of, self.renew])) > 1:
+            print(
+                "Combinations of -renew, -on-behalf-of, and -archive-key are currently not supported"
+            )
+            return None
+
+        if self.on_behalf_of:
+            username = self.on_behalf_of
+            if self.on_behalf_of.count("\\") > 0:
+                parts = username.split("\\")
+                username = "\\".join(parts[1:])
+                domain = parts[0]
+                if "." in domain:
+                    print(
+                        "Domain part of '-on-behalf-of' should not be a FQDN"
+                    )
+
+        renewal_cert = None
+        renewal_key = None
+        if self.renew:
+            if self.pfx is None:
+                print(
+                    "A certificate and private key (-pfx) is required in order for renewal"
+                )
+                return False
+
+            with open(self.pfx, "rb") as f:
+                renewal_key, renewal_cert = load_pfx(f.read())
+
+        csr, key = create_csr(
+            username,
+            alt_dns=self.alt_dns,
+            alt_upn=self.alt_upn,
+            alt_sid=self.alt_sid,
+            key=self.key,
+            key_size=self.key_size,
+            subject=self.subject,
+            renewal_cert=renewal_cert,
+        )
+        self.key = key
+
+        csr = csr_to_der(csr)
+
+        if self.archive_key:
+            ca = CA(self.target, self.ca)
+            print("Trying to retrieve CAX certificate")
+            cax_cert = ca.get_exchange_certificate()
+            print("Retrieved CAX certificate")
+
+            csr = create_key_archival(der_to_csr(csr), self.key, cax_cert)
+
+        if self.renew:
+            csr = create_renewal(csr, renewal_cert, renewal_key)
+
+        if self.on_behalf_of:
+            if self.pfx is None:
+                print(
+                    "A certificate and private key (-pfx) is required in order to request on behalf of another user"
+                )
+                return False
+
+            with open(self.pfx, "rb") as f:
+                agent_key, agent_cert = load_pfx(f.read())
+
+            csr = create_on_behalf_of(csr, self.on_behalf_of, agent_cert, agent_key)
+
+        attributes = ["CertificateTemplate:%s" % self.template]
+
+        if self.alt_upn is not None or self.alt_dns is not None:
+            san = []
+            if self.alt_dns:
+                san.append("dns=%s" % self.alt_dns)
+            if self.alt_upn:
+                san.append("upn=%s" % self.alt_upn)
+
+            attributes.append("SAN:%s" % "&".join(san))
+
+        cert = self.interface.request(csr, attributes)
+
+        if cert is False:
+            print("Failed to request certificate")
+            return False
+
+        if self.subject:
+            subject = ",".join(map(lambda x: x.rfc4514_string(), cert.subject.rdns))
+            print("Got certificate with subject: %s" % subject)
+
+        identifications = get_identifications_from_certificate(cert)
+
+        print_certificate_identifications(identifications)
+
+        object_sid = get_object_sid_from_certificate(cert)
+        if object_sid is not None:
+            print("Certificate object SID is %s" % repr(object_sid))
+        else:
+            print("Certificate has no object SID")
+
+        out = self.out
+        if out is None:
+            out, _ = cert_id_to_parts(identifications)
+            if out is None:
+                out = self.target.username
+
+            out = out.rstrip("$").lower()
+
+        pfx = create_pfx(key, cert)
+
+        outfile = "%s.pfx" % out
+
+        with open(outfile, "wb") as f:
+            f.write(pfx)
+
+        print("Saved certificate and private key to %s" % repr(outfile))
+
+        return pfx, outfile
     

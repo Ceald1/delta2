@@ -15,3 +15,8 @@ tgs*
 exports
 app
 .mypy_cahce
+*.json
+*.key
+*.pfx
+*.der
+*.cert

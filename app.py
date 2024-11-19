@@ -44,6 +44,10 @@ tags_metadata = [
         {
                 "name": "smb",
                 "description": "routes for smb"
+        },
+        {
+                "name": "certs",
+                "description": "routes for AD CS "
         }
 ]
 
@@ -1042,13 +1046,24 @@ from delta2.scripts.adcs.template import Template
 from delta2.scripts.adcs.ca import CA 
 from certipy.lib.target import Target
 from delta2.scripts.adcs.ldap import Connection
-
+from certipy.lib.target import Target as CertipyTarget
+from delta2.scripts.adcs.find import Find
 
 from dns.resolver import Resolver
 
 
-class Certs(BaseModel):
-        pass
+class Get_Certs(BaseModel):
+        dc_ip: str
+        domain: str
+        username: str
+        hashes: str
+        password: str
+        ns: str
+        kerberos: str = "False"
+        target_ip: str
+        scheme: str = "ldaps"
+        vulnerable: str = "False"
+        dc_only: str = "False"
 
 
 
@@ -1066,13 +1081,42 @@ class Certs(BaseModel):
 #     config = template.get_config("superTemplate")
 #     json_data = template.to_json(dict(config))
 #     normal_data = template.load_json(json_data)
-@app.post("/adcs/get_templates")
-def get_templates(certs: Certs):
+
+@app.post("/adcs/get_templates", tags=['certs'])
+def get_templates(certs: Get_Certs):
         """
         Get Templates for ADCS certificates
         """
-        pass
+        dc_ip = certs.dc_ip
+        domain = certs.domain
+        username = certs.username
+        hashes = certs.hashes
+        password = certs.password
+        ns = certs.ns
+        target_ip = certs.target_ip
+        scheme = certs.scheme
+        vulnerable = ast.literal_eval(certs.vulnerable)
+        dc_only = ast.literal_eval(certs.dc_only)
+        kerberos = ast.literal_eval(certs.kerberos)
+        target = CertipyTarget()
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns)
 
+        connection = Connection(target=target)
+
+        find = Find(target=target, connection=connection, json=True, scheme=scheme)
+        try:
+                data = find.find()
+                data = json.loads(data)
+                if vulnerable == True:
+                        templates = data['Certificate Templates']
+                        data = []
+                        for template in list(templates.keys()):
+                                if "[!] Vulnerabilities" in list(templates[template].keys()):
+                                        template = templates[template]
+                                        data.append(template)
+        except Exception as e:
+                data = str(e)
+        return {"response": data}
 
 
 
