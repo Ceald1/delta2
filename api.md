@@ -61,7 +61,8 @@ grabs all current routes that are available for the API, used for building CLIs 
     "/graphing/asreproastable",
     "/graphing/pwned",
     "/graphing/clear",
-    "/routes"
+    "/routes",
+    "/adcs/get_templates"
   ]
 }
 ```
