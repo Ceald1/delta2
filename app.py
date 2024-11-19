@@ -107,18 +107,6 @@ class Roast(BaseModel):
 
 
 
-class editor(BaseModel):
-        option: str= ""
-        computer_name: str = ""
-        computer_pass: str= ""
-        target_obj: str= ""
-        new_pass: str = ""
-        oldpass: str = ""
-        group: str = ""
-        ou: str=""
-        container: str=""
-        service: str=""
-
 
 
 
@@ -602,8 +590,22 @@ async def collect(target: Target, kerb: Kerberos):
                 return {"response": str(e)}
         
 
+class editor(BaseModel):
+        option: str= ""
+        computer_name: str = ""
+        computer_pass: str= ""
+        target_obj: str= ""
+        new_pass: str = ""
+        oldpass: str = ""
+        group: str = ""
+        ou: str=""
+        container: str=""
+        service: str=""
+        property_modify: str=""
+
 
 from delta2.scripts.objeditor import Objeditor
+import ast
 @app.post("/ldap/objeditor", tags=['ldap'])
 def editobj(target: Target, kerb: Kerberos, ops: editor):
         """ Object editor options are: add_computer, add_member, edit_pass, delete_group_member, delete, add_rbcd """
@@ -670,6 +672,9 @@ def editobj(target: Target, kerb: Kerberos, ops: editor):
                 if action == "add_rbcd":
                         data = objeditor.add_rbcd(target=target_obj, service=service)
 
+                if action == "edit_obj":
+                        property_modify = ast.literal_eval(ops.property_modify)
+                        data = objeditor.edit_obj(target=target_obj, property_=property_modify)
 
 
                 return {"response": data}

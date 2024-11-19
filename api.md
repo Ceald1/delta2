@@ -495,6 +495,15 @@ add a resource-based constrained delegation to the target object, service is the
   "service": ""
 }
 ```
+#### edit_obj
+edit a property of an object
+```JSON
+"ops": {
+  "option":"edit_obj",
+  "target_obj": "",
+  "property_modify":"{'property_name':'new_property_value'}"
+}
+```
 
 
 

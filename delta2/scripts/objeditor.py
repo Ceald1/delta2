@@ -170,6 +170,16 @@ class Objeditor:
         """ Delete computer, user, group, or any object """
         self.ldap.bloodydelete(obj)
         return {"name": obj}
+    
+    def edit_obj(self, obj_name:str, property_:dict):
+        target_property = list(property_.keys())[0]
+        op = [(ldap3.MODIFY_REPLACE), [property_[target_property]]]
+        try:
+            self.ldap.bloodymodify(obj, op)
+            return {"name": obj_name, "modified_property": property_}
+        except Exception as e:
+            raise e
+
 
 
 
