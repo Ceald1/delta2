@@ -124,7 +124,7 @@ class Connection:
 
 
 class Template:
-    def __init__(self, connection: Connection, template):
+    def __init__(self, connection: Connection, template=None):
         self.connection = connection
         self.ldap = connection.connection
         self.template = template
@@ -151,38 +151,117 @@ class Template:
 
     def to_json(self, config: dict) -> str:
         """Outputs template config to Dictionary."""
-        return json.dumps(config, indent=4, cls=CustomJSONEncoder)
-
-    
-    def load_json(self, config_json:str) -> Dict:
-        """ Loads config for template and outputs Dict from typing.Dict """
-        output = json.loads(config_json, cls=CustomJSONDecoder)
-        return output
-
-    def set_config(self, config:Dict, template: str) -> bool:
-        """ Set configuration for specified template, template must be a DN """
-        changes = {}
-        for key in config['raw_attributes'].keys():
+        configuration = config
+        output = {}
+        for key, value in configuration.items():
             if key in PROTECTED_ATTRIBUTES:
                 continue
-            if key not in PROTECTED_ATTRIBUTES:
-                changes[key] = [(ldap3.MODIFY_REPLACE,[])]
-            by_op = lambda item: item[1][0][0]
+
+            if type(value) == list:
+                output[key] = list(map(lambda x: x.hex(), value))
+            else:
+                output[key] = value.hex()
+
+        return json.dumps(output)
+        # return json.dumps(config, indent=4, cls=CustomJSONEncoder)
+
+
+
+    def load_json(self, config_json:str) -> Dict:
+        """ Loads config for template and outputs Dict from typing.Dict """
+        output = {}
+        configuration = json.loads(config_json)
+        
+        for key, value in configuration.items():
+            if key in PROTECTED_ATTRIBUTES:
+                continue
+
+            if isinstance(value, list):
+                output[key] = [bytes.fromhex(item) for item in value]
+            else:
+                output[key] = bytes.fromhex(value)
+
+        return output
+
+    def set_config(self, config:Dict, template_name:str) -> bool:
+        """ Set configuration for specified template, template must be a DN """
+        changes = {}
+        old_configuration = self.get_config(template=template_name)
+        new_configuration = config
+        for key in old_configuration["raw_attributes"].keys():
+            if key in PROTECTED_ATTRIBUTES:
+                continue
+
+            if key not in new_configuration:
+                changes[key] = [
+                    (
+                        ldap3.MODIFY_DELETE,
+                        [],
+                    )
+                ]
+                pass
+
+            if key in new_configuration:
+                old_values = old_configuration.get_raw(key)
+                new_values = new_configuration[key]
+                if collections.Counter(old_values) == collections.Counter(new_values):
+                    continue
+
+                changes[key] = [
+                    (
+                        ldap3.MODIFY_REPLACE,
+                        new_configuration[key],
+                    )
+                ]
+        for key, value in new_configuration.items():
+            if (
+                key in changes
+                or key in PROTECTED_ATTRIBUTES
+                or key in old_configuration["raw_attributes"]
+            ):
+                continue
+
+            changes[key] = [
+                (
+                    ldap3.MODIFY_ADD,
+                    value,
+                )
+            ]
+
+        if len(changes.keys()) == 0:
+            raise Exception(
+                "New configuration is the same as old configuration. Not updating"
+            )
+
+        print(
+            "Updating certificate template %s" % repr(old_configuration.get("cn"))
+        )
+
+        by_op = lambda item: item[1][0][0]
         for op, group in groupby(sorted(changes.items(), key=by_op), by_op):
+            print("%s:" % op)
             for item in list(group):
                 key = item[0]
                 value = item[1][0][1]
+                print("    %s: %s" % (key, repr(value)))
+
         result = self.ldap.modify(
-            template,
+            old_configuration.get("distinguishedName"),
             changes,
             controls=security_descriptor_control(sdflags=0x4),
-            )
-        if result['result'] == 0:
+        )
+
+        if result["result"] == 0:
+            print("Successfully updated %s" % repr(old_configuration.get("cn")))
             return True
         elif result["result"] == ldap3.core.results.RESULT_INSUFFICIENT_ACCESS_RIGHTS:
-            return False
+            print(
+                "User %s doesn't have permission to update these attributes on %s"
+                % (repr(self.target.username), repr(old_configuration.get("cn")))
+            )
         else:
-            raise Exception(result['message'])
+            print("Got error: %s" % result["message"])
+
 
 
 

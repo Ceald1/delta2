@@ -1067,22 +1067,7 @@ class Get_Certs(BaseModel):
 
 
 
-
-# Example code for templates:
-#     target = Target()
-#     dc_ip = "10.10.10.11"
-#     domain = "testme.local"
-#     username = "administrator"
-#     hashes = "aaaaaa:aaaaaaaaaa"
-#     ns = "testme.local"
-#     target = target.create(domain=domain, username=username, hashes=hashes, target_ip=dc_ip, dc_ip=dc_ip, ns=dc_ip)
-#     connection = Connection(target=target)
-#     template = Template(connection=connection, template="superTemplate")
-#     config = template.get_config("superTemplate")
-#     json_data = template.to_json(dict(config))
-#     normal_data = template.load_json(json_data)
-
-@app.post("/adcs/get_templates", tags=['certs'])
+@app.post("/adcs/templates/get", tags=['certs'])
 def get_templates(certs: Get_Certs):
         """
         Get Templates for ADCS certificates
@@ -1118,13 +1103,91 @@ def get_templates(certs: Get_Certs):
                 data = str(e)
         return {"response": data}
 
+class Cert_config(BaseModel):
+        dc_ip: str
+        domain: str
+        username: str
+        hashes: str
+        password: str
+        ns: str
+        kerberos: str = "False"
+        target_ip: str
+        scheme: str = "ldaps"
+        template_name:str
 
+@app.post("/adcs/templates/config", tags=['certs'])
+def get_config(certs: Cert_config):
+        """ 
+        Get certificate config
+        """
+        dc_ip = certs.dc_ip
+        domain = certs.domain
+        username = certs.username
+        hashes = certs.hashes
+        password = certs.password
+        ns = certs.ns
+        target_ip = certs.target_ip
+        template_name = certs.template_name
+        scheme = certs.scheme
+        kerberos = ast.literal_eval(certs.kerberos)
+        target = CertipyTarget()
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns)
 
+        connection = Connection(target=target)
+        template = Template(connection=connection)
+        try:
+                template_conf = template.get_config(template=template_name)
+                data = json.loads(template.to_json(config=template_conf['raw_attributes']))
+        
+        except Exception as e:
+                print(e)
+                data = str(e)
+        return {"response": data}
 
+class Set_Cert_Config(BaseModel):
+        dc_ip: str
+        domain: str
+        username: str
+        hashes: str
+        password: str
+        ns: str
+        kerberos: str = "False"
+        target_ip: str
+        scheme: str = "ldaps"
+        template_name:str
+        config_data: dict={}
+import ldap3
 
+@app.post("/adcs/templates/set", tags=['certs'])
+def set_config(certs: Set_Cert_Config):
+        """
+        set cert config
+        """
+        dc_ip = certs.dc_ip
+        domain = certs.domain
+        username = certs.username
+        hashes = certs.hashes
+        password = certs.password
+        ns = certs.ns
+        target_ip = certs.target_ip
+        template_name = certs.template_name
+        scheme = certs.scheme
+        kerberos = ast.literal_eval(certs.kerberos)
+        target = CertipyTarget()
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns)
+        cert_conf = certs.config_data
 
-
-
+        connection = Connection(target=target)
+        template = Template(connection=connection)
+        cert_conf = template.load_json(json.dumps(cert_conf))
+        try:
+                template_conf = template.set_config(config=cert_conf, template_name=template_name)
+                data = "Set template config!"
+                if template_conf == False:
+                        raise Exception(ldap3.core.results.RESULT_INSUFFICIENT_ACCESS_RIGHTS)
+        except Exception as e:
+                data = str(e)
+        return {"response": data}
 
 
 
