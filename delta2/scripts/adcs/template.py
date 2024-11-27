@@ -138,6 +138,7 @@ class Template:
             query_sd=True
         )
         if len(results) == 0:
+            print("checking with display name...")
             results = self.ldap.search(
             f"(&(displayName={template})(objectClass=pKICertificateTemplate))",
             search_base=self.ldap.configuration_path,
@@ -184,7 +185,7 @@ class Template:
         return output
 
     def set_config(self, config:Dict, template_name:str) -> bool:
-        """ Set configuration for specified template, template must be a DN """
+        """ Set configuration for specified template, template must be a name """
         changes = {}
         old_configuration = self.get_config(template=template_name)
         new_configuration = config

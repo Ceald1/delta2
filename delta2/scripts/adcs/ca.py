@@ -541,8 +541,8 @@ class CA:
         try:
             resp = self.cert_admin2.request(request)
         except DCERPCSessionError as e:
-            if "E_ACCESSDENIED" in str(e):
-                return False
+            # if "E_ACCESSDENIED" in str(e):
+            #     return False
             raise e
         
         error_code = resp['ErrorCode']
@@ -550,8 +550,8 @@ class CA:
             return True
         else:
             msg = translate_error_code(error_code)
-            print(msg)
-            return False
+            raise Exception(msg)
+
     def disable(self):
         return self.enable(disable=True)
     
@@ -616,18 +616,18 @@ class CA:
         except DCERPCSessionError as e:
             if "E_ACCESSDENIED" in str(e):
                 # logging.error("Got access denied while trying to add %s" % right_type)
-                return False
-            print(e)
+                # return False
+                print(e)
             raise e
         error_code = resp["ErrorCode"]
         if error_code == 0:
-            print(
+            return(
                 "Successfully added %s %s on %s"
                 % (right_type, repr(user.get("sAMAccountName")), repr(self.ca))
             )
         else:
             error_msg = translate_error_code(error_code)
-            print(
+            raise(
                 "Got error while trying to add %s: %s" % (right_type, error_msg)
             )
             return False
@@ -660,7 +660,7 @@ class CA:
                 continue
 
             if ace["Ace"]["Mask"]["Mask"] & right == 0:
-                print(
+                raise Exception(
                     "User %s does not have %s rights on %s"
                     % (repr(user.get("sAMAccountName")), right_type, repr(self.ca))
                 )
@@ -672,7 +672,7 @@ class CA:
                 sd["Dacl"]["Data"].pop(i)
             break
         else:
-            print(
+            raise Exception(
                 "User %s does not have %s rights on %s"
                 % (repr(user.get("sAMAccountName")), right_type, repr(self.ca))
             )
@@ -688,14 +688,14 @@ class CA:
             resp = self.cert_admin2.request(request)
         except DCERPCSessionError as e:
             if "E_ACCESSDENIED" in str(e):
-                print(
+                raise Exception(
                     "Got access denied while trying to remove %s" % right_type
                 )
                 return False
             raise e
         error_code = resp["ErrorCode"]
         if error_code == 0:
-            return True
+            return f"deleted {user}"
         else:
             error_msg = translate_error_code(error_code)
             raise Exception(error_msg)

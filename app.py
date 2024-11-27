@@ -1189,9 +1189,210 @@ def set_config(certs: Set_Cert_Config):
                 data = str(e)
         return {"response": data}
 
+class Cert_enable_disable(BaseModel):
+        dc_ip: str
+        domain: str
+        username: str
+        hashes: str
+        password: str
+        ns: str
+        kerberos: str = "False"
+        target_ip: str
+        scheme: str = "ldaps"
+        template_name:str
+        certificate_authority: str
+
+@app.post("/adcs/templates/enable")
+def enable_template(certs: Cert_enable_disable):
+        """
+        enable a template
+        """
+        dc_ip = certs.dc_ip
+        domain = certs.domain
+        username = certs.username
+        hashes = certs.hashes
+        password = certs.password
+        ns = certs.ns
+        target_ip = certs.target_ip
+        template_name = certs.template_name
+        scheme = certs.scheme
+        kerberos = ast.literal_eval(certs.kerberos)
+        target = CertipyTarget()
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns)
+        authority = certs.certificate_authority
+        try:
+                connection = Connection(target=target)
+                ca = CA(target=target, connection=connection, ca=authority, template=template_name)
+                ca.enable(disable=False)
+                data = f"enabled: {template_name} on Certificate Authority: {authority}"
+        except Exception as e:
+                data = str(e)
+        return {"response": data}
 
 
 
+@app.post("/adcs/templates/disable")
+def disable_template(certs: Cert_enable_disable):
+        """
+        disable a template
+        """
+        dc_ip = certs.dc_ip
+        domain = certs.domain
+        username = certs.username
+        hashes = certs.hashes
+        password = certs.password
+        ns = certs.ns
+        target_ip = certs.target_ip
+        template_name = certs.template_name
+        scheme = certs.scheme
+        kerberos = ast.literal_eval(certs.kerberos)
+        target = CertipyTarget()
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns)
+        authority = certs.certificate_authority
+        try:
+                connection = Connection(target=target)
+                ca = CA(target=target, connection=connection, ca=authority, template=template_name)
+                ca.enable(disable=True)
+                data = f"enabled: {template_name} on Certificate Authority: {authority}"
+        except Exception as e:
+                data = str(e)
+        return {"response": data}
+class Cert_officer(BaseModel):
+        dc_ip: str
+        domain: str
+        username: str
+        hashes: str
+        password: str
+        ns: str
+        kerberos: str = "False"
+        target_ip: str
+        scheme: str = "ldaps"
+        officer_name:str
+        certificate_authority: str
+
+@app.post("/adcs/officers/add")
+def add_officer(certs: Cert_officer):
+        """
+        add an officer to domain
+        """
+        dc_ip = certs.dc_ip
+        domain = certs.domain
+        username = certs.username
+        hashes = certs.hashes
+        password = certs.password
+        ns = certs.ns
+        target_ip = certs.target_ip
+        template_name = certs.template_name
+        scheme = certs.scheme
+        kerberos = ast.literal_eval(certs.kerberos)
+        target = CertipyTarget()
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns)
+        authority = certs.certificate_authority
+        officer = certs.officer_name
+        try:
+                connection = Connection(target=target)
+                ca = CA(target=target, connection=connection, ca=authority)
+                data = ca.add_officer(officer=officer)
+        except Exception as e:
+                print(e)
+                data = str(e)
+        return {"response": data}
+
+@app.post("/adcs/officers/delete")
+def delete_officer(certs: Cert_officer):
+        """
+        delete a certificate officer
+        """
+        dc_ip = certs.dc_ip
+        domain = certs.domain
+        username = certs.username
+        hashes = certs.hashes
+        password = certs.password
+        ns = certs.ns
+        target_ip = certs.target_ip
+        template_name = certs.template_name
+        scheme = certs.scheme
+        kerberos = ast.literal_eval(certs.kerberos)
+        target = CertipyTarget()
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns)
+        authority = certs.certificate_authority
+        officer = certs.officer_name
+        try:
+                connection = Connection(target=target)
+                ca = CA(target=target, connection=connection, ca=authority)
+                data = ca.remove_officer(officer=officer)
+        except Exception as e:
+                print(e)
+                data = str(e)
+        return {"response": data}
+
+class Cert_manager(BaseModel):
+        dc_ip: str
+        domain: str
+        username: str
+        hashes: str
+        password: str
+        ns: str
+        kerberos: str = "False"
+        target_ip: str
+        scheme: str = "ldaps"
+        manager_name:str
+        certificate_authority: str
+@app.post("/adcs/managers/add")
+def add_manager(certs: Cert_manager):
+        """
+        add a certificate manager to domain
+        """
+        dc_ip = certs.dc_ip
+        domain = certs.domain
+        username = certs.username
+        hashes = certs.hashes
+        password = certs.password
+        ns = certs.ns
+        target_ip = certs.target_ip
+        template_name = certs.template_name
+        scheme = certs.scheme
+        kerberos = ast.literal_eval(certs.kerberos)
+        target = CertipyTarget()
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns)
+        authority = certs.certificate_authority
+        manager = certs.manager_name
+        try:
+                connection = Connection(target=target)
+                ca = CA(target=target, connection=connection, ca=authority)
+                data = ca.add_manager(manager=manager)
+        except Exception as e:
+                print(e)
+                data = str(e)
+        return {"response": data}
+
+@app.post("/adcs/managers/delete")
+def delete_manager(certs: Cert_manager):
+        """
+        delete a certificate manager
+        """
+        dc_ip = certs.dc_ip
+        domain = certs.domain
+        username = certs.username
+        hashes = certs.hashes
+        password = certs.password
+        ns = certs.ns
+        target_ip = certs.target_ip
+        template_name = certs.template_name
+        scheme = certs.scheme
+        kerberos = ast.literal_eval(certs.kerberos)
+        target = CertipyTarget()
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns)
+        authority = certs.certificate_authority
+        manager = certs.manager_name
+        try:
+                connection = Connection(target=target)
+                ca = CA(target=target, connection=connection, ca=authority)
+                data = ca.remove_manager(manager=manager)
+        except Exception as e:
+                print(e)
+                data = str(e)
+        return {"response": data}
 
 
 
