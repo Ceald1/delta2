@@ -126,10 +126,22 @@ class DATABASE:
                         domain=domain,
       			database=database
 		)
-
-
-
-
+                if typ == "CA":
+                        records, summary, keys = self.client.execute_query(
+			"CREATE (:CA {name: $name, t: $t, domain:$domain});".replace("'", ''),
+			name=name
+   			,t=t,
+                        domain=domain,
+      			database=database
+		)
+                if typ == "Cert":
+                        records, summary, keys = self.client.execute_query(
+			"CREATE (:Cert {name: $name, t: $t, domain:$domain});".replace("'", ''),
+			name=name
+   			,t=t,
+                        domain=domain,
+      			database=database
+		)
                 q = (records, summary, keys)
                 return q
         

@@ -743,7 +743,7 @@ run a winrm command, returns output as string.
 Yes you heard that right. Even I still don't believe I decided to go through the pain of implementing this. Thankfully most of the code is copied from Certipy. Certipy repo: https://github.com/ly4k/Certipy.git for these you get curl commands. If you don't know what an option does just go to the Certipy source code or read the docs for AD CS
 
 ### get templates
-get certificate templates:
+get certificate templates and to graph them in memgraph:
 ```bash
 curl -X 'POST' \
   'http://localhost:9000/adcs/templates/get' \
@@ -760,7 +760,8 @@ curl -X 'POST' \
   "target_ip": "10.10.10.1",
   "scheme": "ldaps",
   "vulnerable": "True",
-  "dc_only": "False"
+  "dc_only": "False",
+  "graph": "True"
 }' | jq
 ```
 

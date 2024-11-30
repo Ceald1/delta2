@@ -11,9 +11,9 @@ import (
 // DFS traverses the graph recursively and collects all paths
 func DFS(startNode string, driver neo4j.DriverWithContext, visited map[string]bool, path string, paths *[]string) {
 	query := `MATCH (a {name: $name})-[b]->(c) 
-			  WHERE not type(b) in ['Read_All_Properties', 'List_Contents', 'Key_Read', 'Read_Permissions', 'RemoteInto']
-			  AND not c.name IN ["Remote Management Users", "Remote Desktop Users"]
-			  RETURN collect({endNode: c.name, relationship: type(b), endNodeType: c.t}) AS d`
+			 WHERE not type(b) in ['Read_All_Properties', 'List_Contents', 'Key_Read', 'Read_Permissions', 'RemoteInto']
+			 AND not c.name IN ["Remote Management Users", "Remote Desktop Users"]
+			 RETURN collect({endNode: c.name, relationship: type(b), endNodeType: c.t}) AS d`
 	visited[startNode] = true
 	params := map[string]interface{}{"name": startNode}
 	ctx := context.Background()
@@ -28,6 +28,15 @@ func DFS(startNode string, driver neo4j.DriverWithContext, visited map[string]bo
 			fmt.Println("Failed to cast 'd' to []interface{}")
 			continue
 		}
+
+		// Check if there are no relationships (empty array `d`)
+		if len(d) == 0 {
+			// If no relationships, we are at a group with no outgoing relationships, backtrack.
+			*paths = append(*paths, path) // Add the path for this group
+			return
+		}
+
+		// Otherwise, continue traversing the graph
 		for _, entry := range d {
 			entryMap, ok := entry.(map[string]interface{})
 			if !ok {
@@ -64,7 +73,7 @@ func findMaxDashes(stringsList []string) string {
 	// Iterate over each string in the list
 	for _, str := range stringsList {
 		// Count the number of "-" characters in the current string
-		count := strings.Count(str, "-")
+		count := strings.Count(str, "->")
 		// Update the result if the current string has more "-" than the previous max
 		if count > maxCount {
 			maxCount = count
@@ -80,6 +89,7 @@ func main() {
 	if len(args) < 2 {
 		panic("You need to specify the start node!")
 	}
+
 	startNode := args[1]
 	//config and initiate the driver
 	dbUser := ""

@@ -1069,8 +1069,9 @@ class Get_Certs(BaseModel):
         scheme: str = "ldaps"
         vulnerable: str = "False"
         dc_only: str = "False"
+        graph: str = "True"
 
-
+from delta2.scripts.adcs.graph import GraphCerts
 
 @app.post("/adcs/templates/get", tags=['certs'])
 def get_templates(certs: Get_Certs):
@@ -1095,6 +1096,9 @@ def get_templates(certs: Get_Certs):
 
         find = Find(target=target, connection=connection, json=True, scheme=scheme)
         try:
+                if certs.graph == "True":
+                        GraphCerts(find=find,database_uri=uri,domain=domain)
+                        return {"response": 0}
                 data = find.find()
                 data = json.loads(data)
                 if vulnerable == True:
@@ -1104,7 +1108,9 @@ def get_templates(certs: Get_Certs):
                                 if "[!] Vulnerabilities" in list(templates[template].keys()):
                                         template = templates[template]
                                         data.append(template)
+
         except Exception as e:
+                print(e, flush=True)
                 data = str(e)
         return {"response": data}
 

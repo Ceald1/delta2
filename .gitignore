@@ -20,3 +20,5 @@ app
 *.pfx
 *.der
 *.cert
+test.sh
+test*.*
