@@ -506,6 +506,16 @@ edit a property of an object
   "property_modify":"{'property_name':'new_property_value'}"
 }
 ```
+### add_genericall
+add genericAll on an account
+```JSON
+"ops": {
+  "option":"add_genericall",
+  "target_obj":"",
+  "source_account":""
+}
+```
+
 
 
 

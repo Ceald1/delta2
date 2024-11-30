@@ -606,6 +606,7 @@ class editor(BaseModel):
         container: str=""
         service: str=""
         property_modify: str=""
+        source_account: str=""
 
 
 from delta2.scripts.objeditor import Objeditor
@@ -621,6 +622,7 @@ def editobj(target: Target, kerb: Kerberos, ops: editor):
         db_location = uri
         db_name = name
         ntlm = kerb.user_hash
+        source_account = ops.source_account
         lm = ntlm.split(":")[0]
         nt = ntlm.split(":")[-1]
 
@@ -672,6 +674,8 @@ def editobj(target: Target, kerb: Kerberos, ops: editor):
                 if action == "delete":
                         data = objeditor.delete(obj=target_obj)
                 
+                if action == "add_genericall":
+                        data = objeditor.add_genericall(source_account=source_account, target=target_obj)
 
                 if action == "add_rbcd":
                         data = objeditor.add_rbcd(target=target_obj, service=service)
@@ -1048,6 +1052,7 @@ from certipy.lib.target import Target
 from delta2.scripts.adcs.ldap import Connection
 from certipy.lib.target import Target as CertipyTarget
 from delta2.scripts.adcs.find import Find
+from delta2.scripts.adcs.shadow import Shadow
 
 from dns.resolver import Resolver
 
@@ -1202,7 +1207,7 @@ class Cert_enable_disable(BaseModel):
         template_name:str
         certificate_authority: str
 
-@app.post("/adcs/templates/enable")
+@app.post("/adcs/templates/enable", tags=["certs"])
 def enable_template(certs: Cert_enable_disable):
         """
         enable a template
@@ -1231,7 +1236,7 @@ def enable_template(certs: Cert_enable_disable):
 
 
 
-@app.post("/adcs/templates/disable")
+@app.post("/adcs/templates/disable", tags=["certs"])
 def disable_template(certs: Cert_enable_disable):
         """
         disable a template
@@ -1270,7 +1275,7 @@ class Cert_officer(BaseModel):
         officer_name:str
         certificate_authority: str
 
-@app.post("/adcs/officers/add")
+@app.post("/adcs/officers/add", tags=["certs"])
 def add_officer(certs: Cert_officer):
         """
         add an officer to domain
@@ -1298,7 +1303,7 @@ def add_officer(certs: Cert_officer):
                 data = str(e)
         return {"response": data}
 
-@app.post("/adcs/officers/delete")
+@app.post("/adcs/officers/delete", tags=["certs"])
 def delete_officer(certs: Cert_officer):
         """
         delete a certificate officer
@@ -1338,7 +1343,7 @@ class Cert_manager(BaseModel):
         scheme: str = "ldaps"
         manager_name:str
         certificate_authority: str
-@app.post("/adcs/managers/add")
+@app.post("/adcs/managers/add", tags=["certs"])
 def add_manager(certs: Cert_manager):
         """
         add a certificate manager to domain
@@ -1366,7 +1371,7 @@ def add_manager(certs: Cert_manager):
                 data = str(e)
         return {"response": data}
 
-@app.post("/adcs/managers/delete")
+@app.post("/adcs/managers/delete", tags=["certs"])
 def delete_manager(certs: Cert_manager):
         """
         delete a certificate manager
@@ -1394,6 +1399,40 @@ def delete_manager(certs: Cert_manager):
                 data = str(e)
         return {"response": data}
 
+class ShadowCerts(BaseModel):
+        dc_ip: str
+        domain: str
+        username: str
+        hashes: str
+        password: str
+        ns: str
+        kerberos: str = "False"
+        target_ip: str
+        scheme: str = "ldaps"
+        target_account: str
+
+@app.post("/adcs/shadow/auto", tags=['certs'])
+def auto_shadow(certs: ShadowCerts):
+        dc_ip = certs.dc_ip
+        domain = certs.domain
+        username = certs.username
+        hashes = certs.hashes
+        password = certs.password
+        ns = certs.ns
+        target_ip = certs.target_ip
+        scheme = certs.scheme
+        target_account = certs.target_account
+        kerberos = ast.literal_eval(certs.kerberos)
+        target = CertipyTarget()
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns)
+        try:
+                connection = Connection(target=target)
+                shadow = Shadow(target=target, connection=connection, account=target_account, scheme=scheme)
+                data = shadow.auto()
+        except Exception as e:
+                print(e)
+                data = str(e)
+        return {"response": data}
 
 
 if __name__ == '__main__':

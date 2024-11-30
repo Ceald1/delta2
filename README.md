@@ -5,7 +5,7 @@ an active directory recon and exploitation tool that uses FastAPI for cloud poss
 
 
 ## Requirements
-Docker and Docker Compose
+Docker, Docker Compose, and go (for the dfs script)
 <!-- 1. Installed Memgraph
 2. Have docker or python 3.11.7+ installed, docker is recommended though -->
 
@@ -26,6 +26,9 @@ Memgraph is ran in the Docker Compose file, no need to run it separately now, yo
 ~~~bash
 bash ./run.sh
 ~~~
+
+## Graphing automation
+a golang script was added for finding the longest path from a node. This script is in the `go_dfs` directory
 
 
 [link to documentation](docs.md)

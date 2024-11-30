@@ -44,7 +44,27 @@ class Objeditor:
                                 self.root = self.root + ',DC=' + d
         
     
-
+    def add_genericall(self, source_account, target):
+        """ Add genericAll """
+        trustee = source_account
+        new_sd, _ = utils.getSD(conn, target)
+        if "s-1-" in trustee.lower():
+            trustee_sid = trustee
+        else:
+            trustee_sid = next(conn.ldap.bloodysearch(trustee, attr=["objectSid"]))[
+                "objectSid"
+            ]
+        utils.addRight(new_sd, trustee_sid)
+        req_flags = msldap.wintypes.asn1.sdflagsrequest.SDFlagsRequestValue(
+            {"Flags": accesscontrol.DACL_SECURITY_INFORMATION}
+        )
+        controls = [("1.2.840.113556.1.4.801", True, req_flags.dump())]
+        conn.ldap.bloodymodify(
+            target,
+            {"nTSecurityDescriptor": [(Change.REPLACE.value, new_sd.getData())]},
+            controls,
+        )
+        return f"Added generic all from account: {source_account}->{target}"
 
 
 
