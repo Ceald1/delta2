@@ -70,12 +70,28 @@ ldap_server_kwargs = {
             },
         }
 
+# control_flag=(
+#             accesscontrol.OWNER_SECURITY_INFORMATION
+#             + accesscontrol.GROUP_SECURITY_INFORMATION
+#             + accesscontrol.DACL_SECURITY_INFORMATION
+# )
+from msldap.wintypes.asn1.sdflagsrequest import SDFlagsRequestValue
 control_flag=(
             accesscontrol.OWNER_SECURITY_INFORMATION
             + accesscontrol.GROUP_SECURITY_INFORMATION
             + accesscontrol.DACL_SECURITY_INFORMATION
 )
-sd_flags_control = security_descriptor_control(sdflags=control_flag)
+
+req_flags = SDFlagsRequestValue({"Flags": control_flag})
+sd_flags_control = [("1.2.840.113556.1.4.801", True, req_flags.dump())]
+
+def is_nested_list(obj):
+    """
+    Check if an object is a nested list.
+    """
+    if isinstance(obj, list):  # Ensure it's a list
+        return any(isinstance(i, list) for i in obj)
+    return False
 
 
 def read_sddl(sddl:str, mds=None):
@@ -205,7 +221,7 @@ def read_sddl(sddl:str, mds=None):
     result['dacl_flags'] = decrypted_aces
 
     return result
-
+from datetime import datetime
 def decode_msds_group_msamembership_sddl(sddl_list):
     """
     Decode SDDLs for msDS-GroupMSAMembership attribute values.
@@ -332,7 +348,7 @@ def rbcd_sddl_parser(sddl_string):
 
     
     return perm_list
-
+from delta2.scripts.utils.ldap import Ldap as NEW_ldap
 
 def format_dn(dn, name):
         parts = dn.split(',')
@@ -347,7 +363,7 @@ def format_dn(dn, name):
         return [groups[0]]
 
 class Data_collection:
-        def __init__(self, domain, user_name, dc, password='', lmhash="",nthash='', kerberos=None, database_uri='bolt://localhost:7687', ldap_ssl=False, kdcHost='', aeskey='', dc_ip=None, root=None, uri=None):
+        def __init__(self, domain, user_name, dc, password='', lmhash="",nthash='', kerberos=False, database_uri='bolt://localhost:7687', ldap_ssl=False, kdcHost='', aeskey='', dc_ip=None, root=None, uri=None):
                 """ Collection script and class for delta2, gc stands for "Global Catalog connection" """
                 self.domain = domain
                 self.username= user_name
@@ -378,10 +394,8 @@ class Data_collection:
                                     self.root = 'DC='+d
                             else:
                                     self.root = self.root + ',DC=' + d
-                if not kerberos:
+                if type(kerberos) != bool:
                     kerberos = False
-                else:
-                    kerberos = True
                 from argparse import Namespace
                 # args = Namespace(domain= self.domain,
                 # username = self.username,
@@ -395,7 +409,7 @@ class Data_collection:
                 # nthash=nthash)
                 if nthash:
                     password = f'{lmhash}:{nthash}'
-                host = dc_ip
+                host = dc
                 if uri:
                     host = uri
                 config = Config(
@@ -409,8 +423,10 @@ class Data_collection:
                     kerberos=kerberos,
                     # key=aeskey,
                 )
-                ad = ConnectionHandler(config=config)
-                self.conn = ad.ldap
+                # ConnectionHandler(config=config)
+                # ad = ConnectionHandler(config=config)
+                ad =  NEW_ldap(cnf=config)
+                self.conn = ad
 
 
 
@@ -419,10 +435,10 @@ class Data_collection:
         def search_forests(self):
             """Searches for subdomains in the domain."""
             query = '(&(objectClass=crossRef)(objectCategory=*))'
-            self.conn.search(search_base=self.root, search_filter=query, search_scope=SUBTREE)
+            entries = self.conn.search(search_base=self.root, search_filter=query, attributes=PROPTERTIES, controls=sd_flags_control, search_scope=SUBTREE, get_operational_attributes=True)
             
-            for result in self.conn.response:
-                #print(result)
+            for result in entries:
+                # print(result, flush=True)
                 if "uri" in result:
                     url = result['uri'][0]
                     ldap_uri = url.split("/DC=")[0]
@@ -435,7 +451,6 @@ class Data_collection:
                         parsed = ",".join(dns)
 
                         self.dns.append({"uri": ldap_uri, "baseDN": parsed})
-            
             #print(self.dns)
             return self.dns
 
@@ -452,9 +467,13 @@ class Data_collection:
             except LDAPAttributeError:
                 self.conn.search(search_base=self.root, search_filter=query, search_scope=SUBTREE,attributes=PROPTERTIES,get_operational_attributes=True, controls=sd_flags_control)
             for result in self.conn.entries:
-                    data = result.entry_attributes_as_dict
-                    user = result.sAMAccountName.value
-                    dn = result.distinguishedName.value
+                    data = result["attributes"]
+                    result = result["attributes"]
+                    # print(data)
+                    # user = result.sAMAccountName.value
+                    user = result["sAMAccountName"]
+                    # dn = result.distinguishedName.value
+                    dn = result["distinguishedName"]
 
                     if str(user) == self.username:
                         pwned = 'True'
@@ -465,11 +484,17 @@ class Data_collection:
                     if "Computers" in dn or "OU=Domain Controllers" in dn:
                         t = 'computer'
                     user = user.lower()
-                    spn = result.servicePrincipalName.value
+                    try:
+                        # spn = result.servicePrincipalName.value
+                        spn = result["servicePrincipalName"]
+                        # print(spn)
+                    except KeyError:
+                        spn = None
                     #print(spn)
-                    Account_control_num = str(result.userAccountControl.value)
-                    sAMAccountType_num = str(result.sAMAccountType.value)
-                    sec = result.nTSecurityDescriptor
+                    Account_control_num = str(result["userAccountControl"][0])
+                    sAMAccountType_num = str(result["sAMAccountType"])
+                    # sec = result.nTSecurityDescriptor
+                    sec = result["nTSecurityDescriptor"]
 
 
 
@@ -490,6 +515,8 @@ class Data_collection:
                     for key in keys:
                         d_ = data[key]
                         i = 1
+                        if not isinstance(d_, list):
+                            d_ = [str(d_)]
                         for d in d_:
                             #print(len(d_))
                             if d:
@@ -520,7 +547,7 @@ class Data_collection:
                                         sid = list(ace.keys())[0]
                                         d = sid.replace("-",'_')
                                         perms = f"""{str(ace[sid]).replace(" ",'').replace("-",'_')}"""
-                                        print(perms)
+                                        # print(perms)
                                         self.DB.add_node(name=d, t='delegate', domain=self.domain, database=self.database, typ="Delegate")
                                         self.DB.add_edge_from_name(starting_node=d, end_node=user, database=self.database, attribute="AllowedToActOnBehalfOfOtherIdentity", domain=self.domain)
                                         self.DB.add_attributes_to_node(node_name=d, domain=self.domain, attribute_name='rights', attribute_info=perms, database=self.database)
@@ -545,6 +572,7 @@ class Data_collection:
 
                     if self.username == user:
                         self.DB.add_attributes_to_node(node_name=user, database=self.database, attribute_name='pwned', attribute_info=pwned, domain=self.domain)
+
 
 
         def ReadGMSAPassword(self):
@@ -577,16 +605,24 @@ class Data_collection:
                         return None
             for result in self.conn.entries:
                     #print(result)
-                    data = result.entry_attributes_as_dict
+                    data = result['attributes']
                     #print(data)
                     keys = list(data.keys())
-                    name =  data['sAMAccountName'][0]
+                    # print(keys)
+                    name =  data['sAMAccountName']
                     if not e2:
                         #print(data)
-                        gmsa = data['msDS-ManagedPassword']
+                        try:
+                            gmsa = data['msDS-ManagedPassword']
+                        except KeyError:
+                            gmsa = None
+                            e2 = "1"
                     if not e:
-                        gmsa_group = data['msDS-GroupMSAMembership']
-                    sid = data['objectSid'][0]
+                        try:
+                            gmsa_group = data['msDS-GroupMSAMembership']
+                        except KeyError:
+                            e = "1"
+                    sid = data['objectSid']
                     #print(sid)
                     nts = data['nTSecurityDescriptor']
                     # print(gmsa)
@@ -642,17 +678,27 @@ class Data_collection:
             except LDAPAttributeError:
                 self.conn.search(search_base=self.root, search_filter=query, search_scope=SUBTREE,attributes=GROUPproperties + ['objectGUID'],get_operational_attributes=True, controls=sd_flags_control)
             for result in self.conn.entries:
-                name = result.samaccountname.value
+                # print(result)
+                result = result["attributes"]
+                # name = result.samaccountname.value
+                name = result["sAMAccountName"]
 
                 try:
-                    members = result.member.values
+                    # members = result.member.values
+                    members = result["member"]
+                    # print(f'{name}: {members}')
                 except:
                     members = []
-                data = result.entry_attributes_as_dict
+                data = result
                 data.pop('sAMAccountName')
                 if members:
                     data.pop('member')
-                groups = result.memberOf.values
+                # groups = result.memberOf.values
+                try:
+                    groups = result["memberOf"]
+                    # data.pop('memberOf')
+                except KeyError:
+                    groups = []
 
 
                 t = 'group'
@@ -673,12 +719,14 @@ class Data_collection:
 
                         known_.append(g)
                         self.DB.add_edge_from_name(end_node=g, starting_node=name, database=self.database, attribute='memberOf', domain=self.domain)
-                data.pop('memberOf')
+                
                 keys = list(data.keys())
                 for key in keys:
                     d_ = data[key]
 
                     i = 1
+                    if not isinstance(d_, list):
+                            d_ = [str(d_)]
                     for d in d_:
                         if d:
                             d = str(d)
@@ -714,7 +762,7 @@ class Data_collection:
             """
             results = self.conn.search(search_base=self.root, search_filter='(&(objectClass=organizationalUnit)(objectCategory=*))', get_operational_attributes=True, attributes=PROPTERTIES+ ["objectGUID"], controls=sd_flags_control)
             for result in self.conn.entries:
-                data = result.entry_attributes_as_dict
+                data = result["attributes"]
                 keys = list(data.keys())
                 d = result.distinguishedName.value
                 final = []
@@ -735,6 +783,8 @@ class Data_collection:
                     #print(f'{key}: {data[key]}')
                     if len(data[key]) > 0:
                         d_ = data[key]
+                        if not isinstance(d_, list):
+                            d_ = [str(d_)]
                         for d in d_:
                             d = str(d)
                             if key == 'nTSecurityDescriptor':
@@ -908,7 +958,7 @@ class Data_collection:
             unknown_GUIDs = list(set(unknown_GUIDs))
             #print(sids)
             for guid in unknown_GUIDs:
-                print(guid)
+                print(f'unkown GUID: {guid} for object: {name} with permissions: {objsid}', flush=True)
             #self.DB.remove_dupe_edges(database=self.database)
             self.DB.remove_nts(database=self.database, domain=self.domain)
 

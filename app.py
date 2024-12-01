@@ -522,7 +522,7 @@ def ticket_editor(tickets: Tickets_editor, target: Target, kerb: Kerberos):
 
 from threading import Thread
 
-
+from delta2.scripts.collector_new import Data_collection as NEW_Data_collection
 """ Ldap Routes """
 @app.post("/ldap/collect", tags=['ldap'])
 async def collect(target: Target, kerb: Kerberos):
@@ -558,6 +558,19 @@ async def collect(target: Target, kerb: Kerberos):
         database_uri=uri,ldap_ssl=ldap_ssl, kdcHost=dc_ip, dc_ip=dc_ip)
                 dns = collector.search_forests()
                 # dns.append(collector.root)
+                if len(dns) == 0:
+                        try:
+                                collector.users()
+                                collector.groups()
+                                collector.connect_OUs()
+                                collector.route_ACEs()
+                                collector.ReadGMSAPassword()
+                                collector.route_others()
+                                return {"response": 0}
+                        except Exception as e:
+                                print(traceback.format_exc())
+                                print(e)
+
                 for dn in dns:
                         try:
                                 host = dn['uri'].replace("ldap://", "")
@@ -582,8 +595,8 @@ async def collect(target: Target, kerb: Kerberos):
                                 collector.route_others()
                         except Exception as e:
                                 # # print(dn)
-                                print(traceback.format_exc())
-                                print(e)
+                                # print(traceback.format_exc())
+                                # print(e)
                                 # print(dn)
                                 None
                 return {"response": 0}
