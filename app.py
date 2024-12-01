@@ -1076,6 +1076,7 @@ class Get_Certs(BaseModel):
         username: str
         hashes: str
         password: str
+        kdcHost:str = ""
         ns: str
         kerberos: str = "False"
         target_ip: str
@@ -1097,15 +1098,16 @@ def get_templates(certs: Get_Certs):
         hashes = certs.hashes
         password = certs.password
         ns = certs.ns
+        kdc = certs.kdcHost
         target_ip = certs.target_ip
         scheme = certs.scheme
         vulnerable = ast.literal_eval(certs.vulnerable)
         dc_only = ast.literal_eval(certs.dc_only)
         kerberos = ast.literal_eval(certs.kerberos)
         target = CertipyTarget()
-        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns)
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, dc_ip=dc_ip, remote_name=kdc)
 
-        connection = Connection(target=target)
+        connection = Connection(target=target, scheme=scheme)
 
         find = Find(target=target, connection=connection, json=True, scheme=scheme)
         try:
@@ -1136,6 +1138,7 @@ class Cert_config(BaseModel):
         ns: str
         kerberos: str = "False"
         target_ip: str
+        kdcHost: str = ""
         scheme: str = "ldaps"
         template_name:str
 
@@ -1153,11 +1156,12 @@ def get_config(certs: Cert_config):
         target_ip = certs.target_ip
         template_name = certs.template_name
         scheme = certs.scheme
+        kdcHost = certs.kdcHost
         kerberos = ast.literal_eval(certs.kerberos)
         target = CertipyTarget()
-        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns)
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, remote_name=kdcHost)
 
-        connection = Connection(target=target)
+        connection = Connection(target=target, scheme=scheme)
         template = Template(connection=connection)
         try:
                 template_conf = template.get_config(template=template_name)
@@ -1178,6 +1182,7 @@ class Set_Cert_Config(BaseModel):
         kerberos: str = "False"
         target_ip: str
         scheme: str = "ldaps"
+        kdcHost: str = ""
         template_name:str
         config_data: dict={}
 import ldap3
@@ -1196,12 +1201,13 @@ def set_config(certs: Set_Cert_Config):
         target_ip = certs.target_ip
         template_name = certs.template_name
         scheme = certs.scheme
+        kdchost = certs.kdcHost
         kerberos = ast.literal_eval(certs.kerberos)
         target = CertipyTarget()
-        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns)
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, remote_name=kdchost)
         cert_conf = certs.config_data
 
-        connection = Connection(target=target)
+        connection = Connection(target=target, scheme=scheme)
         template = Template(connection=connection)
         cert_conf = template.load_json(json.dumps(cert_conf))
         try:
@@ -1223,6 +1229,7 @@ class Cert_enable_disable(BaseModel):
         kerberos: str = "False"
         target_ip: str
         scheme: str = "ldaps"
+        kdcHost: str = ""
         template_name:str
         certificate_authority: str
 
@@ -1242,10 +1249,10 @@ def enable_template(certs: Cert_enable_disable):
         scheme = certs.scheme
         kerberos = ast.literal_eval(certs.kerberos)
         target = CertipyTarget()
-        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns)
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, remote_name=certs.kdcHost)
         authority = certs.certificate_authority
         try:
-                connection = Connection(target=target)
+                connection = Connection(target=target, scheme=scheme)
                 ca = CA(target=target, connection=connection, ca=authority, template=template_name)
                 ca.enable(disable=False)
                 data = f"enabled: {template_name} on Certificate Authority: {authority}"
@@ -1271,10 +1278,10 @@ def disable_template(certs: Cert_enable_disable):
         scheme = certs.scheme
         kerberos = ast.literal_eval(certs.kerberos)
         target = CertipyTarget()
-        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns)
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, remote_name=certs.kdcHost)
         authority = certs.certificate_authority
         try:
-                connection = Connection(target=target)
+                connection = Connection(target=target, scheme=scheme)
                 ca = CA(target=target, connection=connection, ca=authority, template=template_name)
                 ca.enable(disable=True)
                 data = f"enabled: {template_name} on Certificate Authority: {authority}"
@@ -1291,6 +1298,7 @@ class Cert_officer(BaseModel):
         kerberos: str = "False"
         target_ip: str
         scheme: str = "ldaps"
+        kdcHost: str = ""
         officer_name:str
         certificate_authority: str
 
@@ -1310,11 +1318,11 @@ def add_officer(certs: Cert_officer):
         scheme = certs.scheme
         kerberos = ast.literal_eval(certs.kerberos)
         target = CertipyTarget()
-        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns)
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, remote_name=certs.kdcHost)
         authority = certs.certificate_authority
         officer = certs.officer_name
         try:
-                connection = Connection(target=target)
+                connection = Connection(target=target, scheme=scheme)
                 ca = CA(target=target, connection=connection, ca=authority)
                 data = ca.add_officer(officer=officer)
         except Exception as e:
@@ -1338,11 +1346,11 @@ def delete_officer(certs: Cert_officer):
         scheme = certs.scheme
         kerberos = ast.literal_eval(certs.kerberos)
         target = CertipyTarget()
-        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns)
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, remote_name=certs.kdcHost)
         authority = certs.certificate_authority
         officer = certs.officer_name
         try:
-                connection = Connection(target=target)
+                connection = Connection(target=target, scheme=scheme)
                 ca = CA(target=target, connection=connection, ca=authority)
                 data = ca.remove_officer(officer=officer)
         except Exception as e:
@@ -1360,6 +1368,7 @@ class Cert_manager(BaseModel):
         kerberos: str = "False"
         target_ip: str
         scheme: str = "ldaps"
+        kdcHost: str = ""
         manager_name:str
         certificate_authority: str
 @app.post("/adcs/managers/add", tags=["certs"])
@@ -1378,11 +1387,11 @@ def add_manager(certs: Cert_manager):
         scheme = certs.scheme
         kerberos = ast.literal_eval(certs.kerberos)
         target = CertipyTarget()
-        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns)
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, remote_name=certs.kdcHost)
         authority = certs.certificate_authority
         manager = certs.manager_name
         try:
-                connection = Connection(target=target)
+                connection = Connection(target=target, scheme=scheme)
                 ca = CA(target=target, connection=connection, ca=authority)
                 data = ca.add_manager(manager=manager)
         except Exception as e:
@@ -1406,11 +1415,11 @@ def delete_manager(certs: Cert_manager):
         scheme = certs.scheme
         kerberos = ast.literal_eval(certs.kerberos)
         target = CertipyTarget()
-        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns)
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, remote_name=certs.kdcHost)
         authority = certs.certificate_authority
         manager = certs.manager_name
         try:
-                connection = Connection(target=target)
+                connection = Connection(target=target, scheme=scheme)
                 ca = CA(target=target, connection=connection, ca=authority)
                 data = ca.remove_manager(manager=manager)
         except Exception as e:
@@ -1428,6 +1437,7 @@ class ShadowCerts(BaseModel):
         kerberos: str = "False"
         target_ip: str
         scheme: str = "ldaps"
+        kdcHost: str = ""
         target_account: str
 
 @app.post("/adcs/shadow/auto", tags=['certs'])
@@ -1443,9 +1453,9 @@ def auto_shadow(certs: ShadowCerts):
         target_account = certs.target_account
         kerberos = ast.literal_eval(certs.kerberos)
         target = CertipyTarget()
-        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns)
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, remote_name=certs.kdcHost)
         try:
-                connection = Connection(target=target)
+                connection = Connection(target=target, scheme=scheme)
                 shadow = Shadow(target=target, connection=connection, account=target_account, scheme=scheme)
                 data = shadow.auto()
         except Exception as e:
