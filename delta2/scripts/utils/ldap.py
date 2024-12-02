@@ -76,10 +76,11 @@ class Ldap(MSLDAPClient):
             else:
                 dcip = socket.gethostbyname(cnf.host)
             if dcip == cnf.host:
-                raise TypeError(
-                    "You can provide the IP in --dc-ip but you need to provide the"
-                    " hostname in --host in order for kerberos to work"
-                )
+                None
+                # raise TypeError(
+                #     "You can provide the IP in --dc-ip but you need to provide the"
+                #     " hostname in --host in order for kerberos to work"
+                # )
             dcip_param = "dc=" + dcip
             params = params + "&" + dcip_param if params else dcip_param
             if cnf.password:
@@ -181,3 +182,13 @@ class Ldap(MSLDAPClient):
             return entries
 
         return entries
+    
+    def closeThread(self):
+        for task in asyncio.all_tasks(self.loop):
+            task.cancel()
+        self.loop.call_soon_threadsafe(self.loop.stop)
+        self.thread.join(0)
+
+    def close(self):
+        asyncio.run_coroutine_threadsafe(self.disconnect(), self.loop).result()
+        self.closeThread()

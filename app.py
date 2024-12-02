@@ -104,6 +104,7 @@ class Kerberos(BaseModel):
         user_hash: str = ":"
         aeskey: str = ""
         get_hash: str = "False"
+        kdcHost: str = ""
 
 class Roast(BaseModel):
         target_user: str
@@ -537,6 +538,7 @@ async def collect(target: Target, kerb: Kerberos):
         db_location = uri
         db_name = name
         ntlm = kerb.user_hash
+        kdcHost = kerb.kdcHost
         lm = ntlm.split(":")[0]
         nt = ntlm.split(":")[-1]
         e =  "nil"
@@ -555,7 +557,7 @@ async def collect(target: Target, kerb: Kerberos):
         try:
                 collector = Data_collection(domain=domain, password=password, 
         user_name=username,dc=dc, lmhash=lm,nthash=nt, kerberos=kerberos_auth, 
-        database_uri=uri,ldap_ssl=ldap_ssl, kdcHost=dc_ip, dc_ip=dc_ip)
+        database_uri=uri,ldap_ssl=ldap_ssl, kdcHost=kdcHost, dc_ip=dc_ip)
                 dns = collector.search_forests()
                 # dns.append(collector.root)
                 if len(dns) == 0:

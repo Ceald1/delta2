@@ -21,4 +21,4 @@ EXPOSE 9000
 ENV NAME World
 
 # Run app.py when the container launches
-CMD ["python", "app.py"]
+CMD ["python", "app.py", "-uri", "bolt://127.0.0.1:7687"]

@@ -370,7 +370,7 @@ class Data_collection:
                 self.dc = dc
                 self.DB = DATABASE(database_uri)
                 if not kdcHost:
-                    self.kdchost = domain
+                    self.kdchost = dc
                 else:
                     self.kdchost = kdcHost
                 self.kdc = self.kdchost
@@ -410,14 +410,16 @@ class Data_collection:
                 if nthash:
                     password = f'{lmhash}:{nthash}'
                 host = dc
-                if uri:
-                    host = uri
+                # if uri:
+                #     host = uri
+                print(host, flush=True)
                 config = Config(
                     scheme=protocol,
                     host=host,
                     domain=self.domain,
                     username=self.username,
                     password=password,
+                    dcip=dc_ip,
                     # lmhash=lmhash,
                     # nthash=nthash,
                     kerberos=kerberos,

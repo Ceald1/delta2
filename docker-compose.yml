@@ -4,14 +4,12 @@ services:
       context: .
       dockerfile: DOCKERFILE
     user: "root"
-    ports:
-      - "9000:9000"
+    privileged: true  # Enable privileged mode
+    network_mode: "host"  # Use the host's network stack
     volumes:
-      - app:/app
+      - /:/host  # Mount the entire host filesystem under /host (use with caution)
     environment:
       - NAME=Delta2
-    networks: 
-      - "delta2_network"
 
   memgraph:
     image: memgraph/memgraph-platform
@@ -22,10 +20,12 @@ services:
     user: "root"
     volumes:
       - app:/app
-    networks: 
+    networks:
       - "delta2_network"
+
 volumes:
   app:
 networks:
   delta2_network:
     driver: bridge
+
