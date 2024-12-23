@@ -2,824 +2,860 @@
 ## Note:
 API documentation only contains working and documented routes
 
-## `/` route
-contains ASCII art with colors for custom scripts, so they're not plain and bland.
+## Endpoints
 
+### Config
 
-## `/docs` route
-a better view of all routes
+#### Configure Database
 
-
-
-## Config
-### Configuration Memgraph
-to configure the location for Memgraph to be used as the database go to `/config` route on the api, only supports POST requests and is defaulted to the database URI, `bolt://localhost:7687` and the database name: `memgraph`, an example request goes as follows:
-```bash
-curl -X POST "http://localhost:9000/config" --json '{"name": "memgraph", "uri": "bolt://localhost:7687"}'
-```
-    returns 0 if there is no error, if there is an error it is returned
-
-
-### System commands
-to execute system commands go to `/cmd` this is mainly meant for retrieving saved CCache files, an example request:
-```json
-curl "http://localhost:9000/cmd" --json '{
-"command": "ls -la /home"
-}'
-```
-### routes
-grabs all current routes that are available for the API, used for building CLIs or plugins for applications. Returns a dictionary containing a list of strings of available routes, example response:
-```json
-{
-  "response": [
-    "/openapi.json",
-    "/docs",
-    "/docs/oauth2-redirect",
-    "/redoc",
-    "/config",
-    "/cmd",
-    "/",
-    "/documentation",
-    "/kerberos/asrep",
-    "/kerberos/kerbroast",
-    "/kerberos/tgt",
-    "/kerberos/tgs",
-    "/kerberos/st",
-    "/kerberos/download_ticket",
-    "/kerberos/ticket_editor",
-    "/ldap/collect",
-    "/ldap/objeditor",
-    "/mssql/query",
-    "/mssql/xp",
-    "/smb/list_shares",
-    "/smb/get_file_contents",
-    "/smb/list_dirs",
-    "/winrm/cmd",
-    "/graphing/query",
-    "/graphing/admin_paths",
-    "/graphing/kerberoastable",
-    "/graphing/asreproastable",
-    "/graphing/pwned",
-    "/graphing/clear",
-    "/routes",
-    "/adcs/templates/get",
-    "/adcs/templates/config"
-  ]
-}
-```
-
-
-
-## Queries and Graphing
-### Custom Queries:
-to run custom queries go to the `/graphing/query` route, an example request:
-```bash
-curl -X POST "http://localhost:9000/graphing/query" --json '{"query": "MATCH (n) RETURN n"}
-```
-Example response:
-```JSON
-[{"n":{"name": "admin", "adminCount": "1"}}]
-```
-Will return JSON as a response. It's recommended to use the ip of the database instead of the hostname
-
-### Admin Paths:
-to get the shortest paths to admin accounts from pwned users, go to `/graphing/admin_paths`, not recommended for large datasets (1k plus nodes) only supports GET requests, make sure to configure delta2 before using. Example request:
-```bash
-curl "http://localhost:9000/graphing/admin_paths"
-```
-The query ran:
-```ruby
-MATCH path1=(n {t: "user"})-[ *ALLSHORTEST (r, n | 1)]->(m {adminCount: "1"}) WHERE m.disabled is null and n.disabled is null and n.pwned = "True"
-MATCH path2=(a {t: "computer"})-[ *ALLSHORTEST (b, c | 1)]->(d {adminCount: "1"}) WHERE d.disabled is null and a.disabled is null
-RETURN path1,path2
-```
-
-### List kerberoastable users
-to list kerberoastable users go to the endpoint: `/graphing/kerberoastable`, also grabs all attributes and properties to the node(s), and the query that is run:
-```ruby
-MATCH (n) WHERE n.kerberoastable = "True"
-RETURN n
-```
-
-### Mark an object as pwned
-mark an object as pwned. Required JSON:
-```JSON
-{
-  "obj": "",
-  "password": ""
-}
-```
-`obj` is the object name to set `pwned` to `"True"`
-`password` is the password or hash for that object
-
-the query ran:
-```ruby
-MATCH (a) WHERE a.name = '{obj}'
-set a.pwned = 'True'
-return a
-```
-
-
-## Kerberos
-
-### ASRep-Roasting
-ASRep-roasting is done when a user does not require preauthentication. The endpoint: `/kerberos/asrep` Example JSON being sent to the API:
-```json
-{
-  "target": {
-    "domain": "string",
-    "dc": "string",
-    "user_name": "string",
-    "dc_ip": "string"
-  },
-  "kerb": {
-    "get_hash": "False"
+- **URL**: `/config`
+- **Method**: `POST`
+- **Tags**: `config`
+- **Description**: Configure the database.
+- **Request Body**:
+  ```json
+  {
+    "name": "string",  // Database name (default: "memgraph")
+    "uri": "string"    // Database URI (default: "bolt://localhost:7687")
   }
-}
-```
-If you look at the `/docs` route of the API you'll see a bunch of other options but the ones listed here are the only ones needed. Explanation:
-* `domain` the target domain
-* `dc` the domain controller host
-* `user_name` the username for the targeted user
-* `dc_ip` the IP for the domain controller (recommended being used)
-* `get_hash` set either to `"True"` to get the hash in the output or `"False"` to only see if it is vulnerable, will return with `"Vulnerable"` 
+  ```
+- **Response**: `0` if configured properly, error message otherwise.
 
-In the `"asrep_data"` JSON response or the hash if the account is vulnerable. If there is an error it is returned to the `"asrep_data"` JSON response. An example response:
-```json
-{
-    "user":user_name, 
-    "asrep_data": "Vulnerable" or hash or error
-}
-```
+#### Execute Command
 
-### Kerberoasting
-Kerberoasting is doable when a user has an SPN set (service principal name), the endpoint: `/kerberos/kerberoast`, Example JSON:
-```json
-{
-  "target": {
-    "domain": "string",
-    "dc": "string",
-    "user_name": "string",
-    "dc_ip": "string"
-  },
-  "kerb": {
-    "get_hash": "False"
-  }.
-  "roast": {
-    "target_user": "string",
-    "no_preauth": "False"
+- **URL**: `/cmd`
+- **Method**: `POST`
+- **Tags**: `config`
+- **Description**: Execute remote commands.
+- **Request Body**:
+  ```json
+  {
+    "command": "string"  // Command to execute
   }
-}
-```
-* `domain` the target domain
-* `dc` the domain controller host
-* `user_name` the username for the targeted user
-* `dc_ip` the IP for the domain controller (recommended being used)
-* `get_hash` set either to `"True"` to get the hash in the output or `"False"` to only see if it is vulnerable, will return with `"Vulnerable"` 
+  ```
+- **Response**: Command output.
 
-in the `"kerb_data"` JSON response or the hash if the account is vulnerable. if there is an error it is returned in the `"kerb_data"` json response. An example response:
-```json
-{
-    "user":user_name, 
-    "kerb_data": "Vulnerable" or hash or error
-}
-```
+### Other
 
-### TGTs
-To grab a TGT of a specific user, go to `/kerberos/tgt` it will output a CCache file encoded in base64. The JSON required:
-```json
-{
-  "target": {
-    "domain": "string",
-    "dc": "string",
-    "user_name": "",
-    "dc_ip": ""
-  },
-  "kerb": {
-    "password": "",
-    "user_hash": ":",
-    "aeskey": "",
-  },
-  "roast": {
-    "no_preauth": "False"
+#### ASCII Art
+
+- **URL**: `/`
+- **Method**: `GET`
+- **Tags**: `other`
+- **Description**: Grab some cool ASCII art.
+- **Response**: ASCII art.
+
+#### Documentation
+
+- **URL**: `/documentation`
+- **Method**: `GET`
+- **Tags**: `other`
+- **Description**: Get documentation in HTML format.
+- **Response**: HTML documentation.
+
+### Kerberos
+
+#### ASREP Roast
+
+- **URL**: `/kerberos/asrep`
+- **Method**: `POST`
+- **Tags**: `kerberos`
+- **Description**: Asrep roast users or get users that don't require preauth.
+- **Request Body**:
+  ```json
+  {
+    "target": {
+      "domain": "string",
+      "dc": "string",
+      "kerberos": "string",
+      "ldap_ssl": "string",
+      "user_name": "string",
+      "dc_ip": "string"
+    },
+    "kerb": {
+      "password": "string",
+      "user_hash": "string",
+      "aeskey": "string",
+      "get_hash": "string",
+      "kdcHost": "string"
+    }
   }
-}
-```
-* `domain` the target domain
-* `dc` domain controller hostname
-* `user_name` the username
-* `dc_ip` the domain controller IP (not required but recommended)
-* `password` the password for the target (not required)
-* `user_hash` the hash for the user in the format: `lm`:`nt` (not required)
-* `aeskey` the aeskey for the target
-* `no_preauth` set to either `"True"` or `"False`"` if the user requires no preauth or not
+  ```
+- **Response**: JSON response with user and asrep data.
 
+#### Kerberoast
 
-### TGS
-To grab a TGS of a specific user, go to `/kerberos/tgs` it will output a ccache file encoded in base64. The JSON required:
-```json
-{
-  "target": {
-    "domain": "string",
-    "dc": "string",
-    "user_name": "",
-    "dc_ip": ""
-  },
-  "kerb": {
-    "password": "",
-    "user_hash": ":",
-    "aeskey": "",
-  },
-  "roast": {
-    "no_preauth": "False",
-    "target_user": ""
+- **URL**: `/kerberos/kerbroast`
+- **Method**: `POST`
+- **Tags**: `kerberos`
+- **Description**: Kerberoast users.
+- **Request Body**:
+  ```json
+  {
+    "target": {
+      "domain": "string",
+      "dc": "string",
+      "kerberos": "string",
+      "ldap_ssl": "string",
+      "user_name": "string",
+      "dc_ip": "string"
+    },
+    "kerb": {
+      "password": "string",
+      "user_hash": "string",
+      "aeskey": "string",
+      "get_hash": "string",
+      "kdcHost": "string"
+    },
+    "roast": {
+      "target_user": "string",
+      "no_preauth": "string"
+    }
   }
-}
-```
-* `domain` the target domain
-* `dc` domain controller hostname
-* `user_name` the username
-* `dc_ip` the domain controller IP (not required but recommended)
-* `password` the password for the target (not required)
-* `user_hash` the hash for the user in the format: `lm`:`nt` (not required)
-* `aeskey` the aeskey for the target
-* `no_preauth` set to either `"True"` or `"False`"` if the user requires no preauth or not
-* `target_user` the target user
+  ```
+- **Response**: JSON response with user and kerb data.
 
+#### Get TGT
 
+- **URL**: `/kerberos/tgt`
+- **Method**: `POST`
+- **Tags**: `kerberos`
+- **Description**: Grab a TGT for a user.
+- **Request Body**:
+  ```json
+  {
+    "target": {
+      "domain": "string",
+      "dc": "string",
+      "kerberos": "string",
+      "ldap_ssl": "string",
+      "user_name": "string",
+      "dc_ip": "string"
+    },
+    "kerb": {
+      "password": "string",
+      "user_hash": "string",
+      "aeskey": "string",
+      "get_hash": "string",
+      "kdcHost": "string"
+    },
+    "roast": {
+      "target_user": "string",
+      "no_preauth": "string"
+    }
+  }
+  ```
+- **Response**: JSON response with user and TGT data.
 
+#### Get TGS
 
+- **URL**: `/kerberos/tgs`
+- **Method**: `POST`
+- **Tags**: `kerberos`
+- **Description**: Grabs TGSs.
+- **Request Body**:
+  ```json
+  {
+    "target": {
+      "domain": "string",
+      "dc": "string",
+      "kerberos": "string",
+      "ldap_ssl": "string",
+      "user_name": "string",
+      "dc_ip": "string"
+    },
+    "kerb": {
+      "password": "string",
+      "user_hash": "string",
+      "aeskey": "string",
+      "get_hash": "string",
+      "kdcHost": "string"
+    },
+    "roast": {
+      "target_user": "string",
+      "no_preauth": "string"
+    }
+  }
+  ```
+- **Response**: JSON response with user and TGS data.
 
+#### Get ST
 
+- **URL**: `/kerberos/st`
+- **Method**: `POST`
+- **Tags**: `kerberos`
+- **Description**: Grabs ST for a target user.
+- **Request Body**:
+  ```json
+  {
+    "target": {
+      "domain": "string",
+      "dc": "string",
+      "kerberos": "string",
+      "ldap_ssl": "string",
+      "user_name": "string",
+      "dc_ip": "string"
+    },
+    "kerb": {
+      "password": "string",
+      "user_hash": "string",
+      "aeskey": "string",
+      "get_hash": "string",
+      "kdcHost": "string"
+    },
+    "roast": {
+      "target_user": "string",
+      "no_preauth": "string"
+    },
+    "st_data": {
+      "spn": "string",
+      "u2u": "string",
+      "no_s4u2proxy": "string"
+    }
+  }
+  ```
+- **Response**: JSON response with target and ST data.
 
+#### Download Ticket
 
+- **URL**: `/kerberos/download_ticket`
+- **Method**: `POST`
+- **Tags**: `kerberos`
+- **Description**: Download the ticket.
+- **Request Body**:
+  ```json
+  {
+    "get_file": {
+      "file_name": "string"
+    }
+  }
+  ```
+- **Response**: File response.
 
+#### Ticket Editor
 
+- **URL**: `/kerberos/ticket_editor`
+- **Method**: `POST`
+- **Tags**: `kerberos`
+- **Description**: Edit a ticket.
+- **Request Body**:
+  ```json
+  {
+    "tickets": {
+      "b64_encoded_ticket": "string",
+      "spn": "string",
+      "user_sid": "string",
+      "target_user": "string",
+      "groups": "string",
+      "user_id": "string",
+      "impersonate": "string",
+      "request_ticket": "string"
+    },
+    "target": {
+      "domain": "string",
+      "dc": "string",
+      "kerberos": "string",
+      "ldap_ssl": "string",
+      "user_name": "string",
+      "dc_ip": "string"
+    },
+    "kerb": {
+      "password": "string",
+      "user_hash": "string",
+      "aeskey": "string",
+      "get_hash": "string",
+      "kdcHost": "string"
+    }
+  }
+  ```
+- **Response**: JSON response with edited ticket data.
 
+### LDAP
 
+#### Collect Data
 
+- **URL**: `/ldap/collect`
+- **Method**: `POST`
+- **Tags**: `ldap`
+- **Description**: Collect LDAP data.
+- **Request Body**:
+  ```json
+  {
+    "target": {
+      "domain": "string",
+      "dc": "string",
+      "kerberos": "string",
+      "ldap_ssl": "string",
+      "user_name": "string",
+      "dc_ip": "string"
+    },
+    "kerb": {
+      "password": "string",
+      "user_hash": "string",
+      "aeskey": "string",
+      "get_hash": "string",
+      "kdcHost": "string"
+    }
+  }
+  ```
+- **Response**: JSON response with collection status.
 
+#### Edit Object
 
+- **URL**: `/ldap/objeditor`
+- **Method**: `POST`
+- **Tags**: `ldap`
+- **Description**: Edit LDAP object.
+- **Request Body**:
+  ```json
+  {
+    "target": {
+      "domain": "string",
+      "dc": "string",
+      "kerberos": "string",
+      "ldap_ssl": "string",
+      "user_name": "string",
+      "dc_ip": "string"
+    },
+    "kerb": {
+      "password": "string",
+      "user_hash": "string",
+      "aeskey": "string",
+      "get_hash": "string",
+      "kdcHost": "string"
+    },
+    "ops": {
+      "option": "string",
+      "computer_name": "string",
+      "computer_pass": "string",
+      "target_obj": "string",
+      "new_pass": "string",
+      "oldpass": "string",
+      "group": "string",
+      "ou": "string",
+      "container": "string",
+      "service": "string",
+      "property_modify": "string",
+      "source_account": "string"
+    }
+  }
+  ```
+- **Response**: JSON response with edit status.
 
-### STs
-to grab Service Tickets or STs (used for delegations) go to `/kerberos/st`, DISCLAIMER: the majority of the code for grabbing STs was copied from impacket's `getST.py` script and just modified. If u2u and no_s4u2proxy are blank it will default to just grabbing a TGS without any additional steps JSON:
-```JSON
-{
-  "target": {
+### MSSQL
+
+#### Run Query
+
+- **URL**: `/mssql/query`
+- **Method**: `POST`
+- **Tags**: `mssql`
+- **Description**: Run MSSQL query on target.
+- **Request Body**:
+  ```json
+  {
+    "q": {
+      "target_ip": "string",
+      "domain": "string",
+      "user_name": "string",
+      "password": "string",
+      "kerberos": "string",
+      "aeskey": "string",
+      "dc": "string",
+      "dc_ip": "string",
+      "kdcHost": "string",
+      "DB": "string",
+      "nthash": "string",
+      "lmhash": "string",
+      "windows_auth": "string",
+      "query": "string"
+    }
+  }
+  ```
+- **Response**: JSON response with query result.
+
+#### Execute XP Command
+
+- **URL**: `/mssql/xp`
+- **Method**: `POST`
+- **Tags**: `mssql`
+- **Description**: Execute XP command on target.
+- **Request Body**:
+  ```json
+  {
+    "xp": {
+      "op": "string",
+      "command": "string"
+    },
+    "q": {
+      "target_ip": "string",
+      "domain": "string",
+      "user_name": "string",
+      "password": "string",
+      "kerberos": "string",
+      "aeskey": "string",
+      "dc": "string",
+      "dc_ip": "string",
+      "kdcHost": "string",
+      "DB": "string",
+      "nthash": "string",
+      "lmhash": "string",
+      "windows_auth": "string",
+      "query": "string"
+    }
+  }
+  ```
+- **Response**: JSON response with command result.
+
+### SMB
+
+#### List Shares
+
+- **URL**: `/smb/list_shares`
+- **Method**: `POST`
+- **Tags**: `smb`
+- **Description**: List SMB shares.
+- **Request Body**:
+  ```json
+  {
+    "smb_model": {
+      "target_ip": "string",
+      "share": "string",
+      "path": "string"
+    },
+    "target": {
+      "domain": "string",
+      "dc": "string",
+      "kerberos": "string",
+      "ldap_ssl": "string",
+      "user_name": "string",
+      "dc_ip": "string"
+    },
+    "auth": {
+      "password": "string",
+      "user_hash": "string",
+      "aeskey": "string",
+      "get_hash": "string",
+      "kdcHost": "string"
+    }
+  }
+  ```
+- **Response**: JSON response with known shares.
+
+#### Get File Contents
+
+- **URL**: `/smb/get_file_contents`
+- **Method**: `POST`
+- **Tags**: `smb`
+- **Description**: Get file contents from SMB.
+- **Request Body**:
+  ```json
+  {
+    "smb_model": {
+      "target_ip": "string",
+      "share": "string",
+      "path": "string"
+    },
+    "target": {
+      "domain": "string",
+      "dc": "string",
+      "kerberos": "string",
+      "ldap_ssl": "string",
+      "user_name": "string",
+      "dc_ip": "string"
+    },
+    "auth": {
+      "password": "string",
+      "user_hash": "string",
+      "aeskey": "string",
+      "get_hash": "string",
+      "kdcHost": "string"
+    }
+  }
+  ```
+- **Response**: JSON response with file contents.
+
+#### List Directories
+
+- **URL**: `/smb/list_dirs`
+- **Method**: `POST`
+- **Tags**: `smb`
+- **Description**: List directories in an SMB share.
+- **Request Body**:
+  ```json
+  {
+    "smb_model": {
+      "target_ip": "string",
+      "share": "string",
+      "path": "string"
+    },
+    "target": {
+      "domain": "string",
+      "dc": "string",
+      "kerberos": "string",
+      "ldap_ssl": "string",
+      "user_name": "string",
+      "dc_ip": "string"
+    },
+    "auth": {
+      "password": "string",
+      "user_hash": "string",
+      "aeskey": "string",
+      "get_hash": "string",
+      "kdcHost": "string"
+    }
+  }
+  ```
+- **Response**: JSON response with directories.
+
+### WinRM
+
+#### Execute Command
+
+- **URL**: `/winrm/cmd`
+- **Method**: `POST`
+- **Tags**: `winrm`
+- **Description**: Execute command via WinRM.
+- **Request Body**:
+  ```json
+  {
+    "winrm_model": {
+      "target_ip": "string",
+      "command": "string",
+      "ssl": "string"
+    },
+    "target": {
+      "domain": "string",
+      "dc": "string",
+      "kerberos": "string",
+      "ldap_ssl": "string",
+      "user_name": "string",
+      "dc_ip": "string"
+    },
+    "auth": {
+      "password": "string",
+      "user_hash": "string",
+      "aeskey": "string",
+      "get_hash": "string",
+      "kdcHost": "string"
+    }
+  }
+  ```
+- **Response**: JSON response with command output.
+
+### Memgraph
+
+#### Run Query
+
+- **URL**: `/graphing/query`
+- **Method**: `POST`
+- **Tags**: `Memgraph`
+- **Description**: Run a query on Memgraph.
+- **Request Body**:
+  ```json
+  {
+    "q": {
+      "query": "string"
+    }
+  }
+  ```
+- **Response**: JSON response with query result.
+
+#### Get Admin Paths
+
+- **URL**: `/graphing/admin_paths`
+- **Method**: `GET`
+- **Tags**: `Memgraph`
+- **Description**: Get shortest paths to admins.
+- **Response**: JSON response with paths.
+
+#### Get Kerberoastable Users
+
+- **URL**: `/graphing/kerberoastable`
+- **Method**: `GET`
+- **Tags**: `Memgraph`
+- **Description**: Get Kerberoastable users.
+- **Response**: JSON response with users.
+
+#### Get ASREPRoastable Users
+
+- **URL**: `/graphing/asreproastable`
+- **Method**: `GET`
+- **Tags**: `Memgraph`
+- **Description**: Get ASREPRoastable users.
+- **Response**: JSON response with users.
+
+#### Mark Pwned
+
+- **URL**: `/graphing/pwned`
+- **Method**: `POST`
+- **Tags**: `Memgraph`
+- **Description**: Mark an object as pwned.
+- **Request Body**:
+  ```json
+  {
+    "pwn": {
+      "obj": "string",
+      "password": "string"
+    }
+  }
+  ```
+- **Response**: JSON response with status.
+
+#### Clear Database
+
+- **URL**: `/graphing/clear`
+- **Method**: `GET`
+- **Tags**: `Memgraph`
+- **Description**: Clear Memgraph database.
+- **Response**: JSON response with status.
+
+### AD CS
+
+#### Get Templates
+
+- **URL**: `/adcs/templates/get`
+- **Method**: `POST`
+- **Tags**: `certs`
+- **Description**: Get AD CS templates.
+- **Request Body**:
+  ```json
+  {
+    "dc_ip": "string",
     "domain": "string",
-    "dc": "string",
-    "user_name": "string",
-    "dc_ip": "string"
-  },
-  "kerb": {
+    "username": "string",
+    "hashes": "string",
     "password": "string",
-    "user_hash": ":",
-    "aeskey": ""
-  },
-  "roast": {
-    "target_user": "string",
-    "no_preauth": "False"
-  },
-  "st_data": {
-    "spn": "string",
-    "u2u": "",
-    "no_s4u2proxy": ""
-  }
-}
-```
-* `domain` the target domain
-* `dc` domain controller hostname
-* `user_name` the username
-* `dc_ip` the domain controller IP (not required but recommended)
-* `password` the password for the target (not required)
-* `user_hash` the hash for the user in the format: `lm`:`nt` (not required)
-* `aeskey` the aeskey for the target
-* `no_preauth` set to either `"True"` or `"False`"` if the user requires no preauth or not
-* `target_user` the user to target or impersonate
-* `spn` the service principal name for the user being authenticated as
-* `u2u` request the ticket through u2u?
-* `no_s4u2proxy` request with no s4u2proxy?
-
-
-
-
-### Download tickets
-to download a ticket after running the script go to `/kerberos/download_ticket`, JSON:
-```JSON
-{
-  "file_name": "str"
-}
-```
-* `file_name` is the file name to download
-
-
-
-
-
-
-
-### Ticket Editor
-uses nearly the same options as impacket's ticketer.py
-```JSON
-{
-  "tickets": {
-    "b64_encoded_ticket": "",
-    "spn": "",
-    "user_sid": "",
-    "target_user": "",
-    "groups": "513, 512, 520, 518, 519",
-    "user_id": "500",
-    "impersonate": "",
-    "request_ticket": "true"
-  },
-  "target": {
-    "domain": "string",
-    "dc": "string",
-    "user_name": "",
-    "dc_ip": ""
-  },
-  "kerb": {
-    "password": "",
-    "user_hash": ":",
-    "aeskey": "",
-  }
-}
-```
-* `b64_encoded_ticket` the base64 encoded ticket
-* `spn` the spn that the silver ticket will be made for
-* `user_sid` the sids in the ticket
-* `target_user` the target user
-* `groups` the groups that the user belongs to or will belong to
-* `user_id` the ID for user the ticket is created for
-* `impersonate` the user to impersonate (only for sapphire tickets)
-* `request_ticket` request a ticket (`"true"` or `"false"`)?
-
-* `domain` the target domain
-* `dc` domain controller hostname
-* `user_name` the username
-* `dc_ip` the domain controller IP (not required but recommended)
-* `password` the password for the target (not required)
-* `user_hash` the hash for the user in the format: `lm`:`nt` (not required)
-* `aeskey` the aeskey for the target
-* `target_user` the target user
-
-
-
-
-
-
-
-## LDAP
-### Collector
-The collection script is run at: `/ldap/collect`, will be run in the background and will take at least 5 minutes to run depending on the number of accounts in the domain it will take much longer! Also, make sure to configure the memgraph DB, JSON required:
-```JSON
-{
-  "target": {
-    "domain": "string",
-    "dc": "string",
-    "kerberos": "False",
-    "ldap_ssl": "False",
-    "user_name": "",
-    "dc_ip": ""
-  },
-  "kerb": {
-    "password": "",
-    "user_hash": ":",
-    "aeskey": "",
-  }
-}
-```
-* `domain` the target domain
-* `dc` domain controller hostname
-* `user_name` the username
-* `dc_ip` the domain controller IP (not required but recommended)
-* `password` the password for the target (not required)
-* `user_hash` the hash for the user in the format: `lm:nt` (not required)
-* `aeskey` the aeskey for the target
-* `kerberos` use Kerberos authentication, which can be either `"True"` or `"False"`
-* `ldap_ssl` ldapssl? Can be either `"True"` or `"False"`
-
-### Object Editor
-object editor allows you to add, modify, or delete objects in Active Directory. Rerunning the collector is recommended
-
-```JSON
-{
-  "target": {
-    "domain": "string",
-    "dc": "string",
-    "kerberos": "False",
-    "ldap_ssl": "False",
-    "user_name": "",
-    "dc_ip": ""
-  },
-  "kerb": {
-    "password": "",
-    "user_hash": ":",
-    "aeskey": ""
-  },
-  "ops": {
-    "option": "",
-    "computer_name": "",
-    "computer_pass": "",
-    "target_obj": "",
-    "new_pass": "",
-    "oldpass": "",
-    "group": "",
-    "ou": "",
-    "container": "",
-    "service": ""
-  }
-}
-```
-* `domain` the target domain
-* `dc` domain controller hostname
-* `user_name` the username
-* `dc_ip` the domain controller IP (not required but recommended)
-* `password` the password for the target (not required)
-* `user_hash` the hash for the user in the format: `lm:nt` (not required)
-* `aeskey` the aeskey for the target
-* `kerberos` use Kerberos authentication, which can be either `"True"` or `"False"`
-* `ldap_ssl` ldapssl? Can be either `"True"` or `"False"`
-* `option` the action to  perform, current ones: `"add_computer"` ,`"add_member"`, `"edit_pass"`, `"delete_group_member"`, `"delete"`, `"add_rbcd"`
-#### add_computer
-add a computer to the domain, does not require the container or the OU.
-```JSON 
-"ops": {
-  "option": "add_computer",
-  "computer_name": "",
-  "computer_pass": "",
-  "ou": "",
-  "contianer": ""
-
-}
-```
-#### add_member
-add a member to a group
-```JSON
-"ops": {
-  "option": "add_member",
-  "target_obj": "",
-  "group": ""
-}
-```
-#### edit_pass
-edit the password for the target user (target_obj)
-```JSON
-"ops": {
-  "option": "edit_pass",
-  "new_pass": "",
-  "oldpass": "",
-  "target_obj": ""
-}
-```
-#### delete_group_member
-delete a member from a group
-```JSON
-"ops": {
-  "option": "delete_group_member",
-  "target_obj": "",
-  "group": ""
-}
-```
-#### delete
-delete an object (the target_obj)
-```JSON
-"ops": {
-  "option": "delete",
-  "target_obj": ""
-```
-#### add_rbcd
-add a resource-based constrained delegation to the target object, service is the service account that the delegation is from, target obj is the object to (service->target_obj)
-```JSON
-"ops": {
-  "option": "add_rbcd",
-  "target_obj": "",
-  "service": ""
-}
-```
-#### edit_obj
-edit a property of an object
-```JSON
-"ops": {
-  "option":"edit_obj",
-  "target_obj": "",
-  "property_modify":"{'property_name':'new_property_value'}"
-}
-```
-### add_genericall
-add genericAll on an account
-```JSON
-"ops": {
-  "option":"add_genericall",
-  "target_obj":"",
-  "source_account":""
-}
-```
-
-
-
-
-
-## MSSQL
-### Querying
-Run querries against MSSQL.
-```JSON
-{
-  "target_ip": "string",
-  "domain": "string",
-  "user_name": "string",
-  "password": "",
-  "kerberos": "False",
-  "aeskey": "",
-  "dc": "",
-  "dc_ip": "",
-  "kdcHost": "",
-  "DB": "",
-  "nthash": "",
-  "lmhash": "",
-  "windows_auth": "False",
-  "query": ""
-}
-```
-* `target_ip` the target IP
-* `domain` the domain
-* `user_name` the username
-* `password` the password for the target (not required)
-* `kerberos` use Kerberos authentication, which can be either `"True"` or `"False"`
-* `aeskey` the aeskey for the target
-* `dc` domain controller hostname
-* `dc_ip` the domain controller IP (not required but recommended)
-* `kdcHost` the kerberos KDC host
-* `DB` the database name
-* `nthash` the NTLM hash for the user
-* `lmhash` the LM hash for the user
-* `windows_auth` use windows authentication, which can be either `"True"` or `"False"`
-* `query` the query to run
-
-### XP
-Execute xp_cmdshell, xp_dirtree, xp_fileexist, xp_regread, xp_regenumvalues, or xp_regenumkey commands on target
-```JSON
-{
-  "xp": {
-    "op": "xp_cmdshell",
-    "command": ""
-  },
-  "q": {
+    "kdcHost": "string",
+    "ns": "string",
+    "kerberos": "string",
     "target_ip": "string",
-    "domain": "string",
-    "user_name": "string",
-    "password": "",
-    "kerberos": "False",
-    "aeskey": "",
-    "dc": "",
-    "dc_ip": "",
-    "kdcHost": "",
-    "nthash": "",
-    "lmhash": "",
-    "windows_auth": "False",
+    "scheme": "string",
+    "vulnerable": "string",
+    "dc_only": "string",
+    "graph": "string"
   }
-}
-```
-* `op` the command to run, can be either `"xp_cmdshell"`, `"xp_dirtree"`, `"xp_fileexist"`, `"xp_regread"`, `"xp_regenumvalues"`, or `"xp_regenumkey"`
-* `command` the command to run
-* `target_ip` the target IP
-* `domain` the domain
-* `user_name` the username
-* `password` the password for the target (not required)
-* `kerberos` use Kerberos authentication, which can be either `"True"` or `"False"`
-* `aeskey` the aeskey for the target
-* `dc` domain controller hostname
-* `dc_ip` the domain controller IP (not required but recommended)
-* `kdcHost` the kerberos KDC host
-* `nthash` the NTLM hash for the user
-* `lmhash` the LM hash for the user
-* `windows_auth` use windows authentication, which can be either `"True"` or `"False"`
+  ```
+- **Response**: JSON response with templates.
 
+#### Get Template Config
 
-## SMB
-### list_shares
-list smb shares, returns a list of dictionaries with the share name and share description.
-```json
-{
-    "target": {
+- **URL**: `/adcs/templates/config`
+- **Method**: `POST`
+- **Tags**: `certs`
+- **Description**: Get AD CS template config.
+- **Request Body**:
+  ```json
+  {
+    "dc_ip": "string",
     "domain": "string",
-    "dc": "string",
-    "kerberos": "False",
-    "ldap_ssl": "False",
-    "user_name": "",
-    "dc_ip": ""
-  },
-  "kerb": {
-    "password": "",
-    "user_hash": ":",
-    "aeskey": ""
-  },
-  "smb_model": {
-    "target_ip": "string"
-  }
-}
-```
-* `target_ip` the target IP
-* `domain` the target domain
-* `dc` domain controller hostname
-* `user_name` the username
-* `dc_ip` the domain controller IP (not required but recommended)
-* `password` the password for the target (not required)
-* `user_hash` the hash for the user in the format: `lm:nt` (not required)
-* `aeskey` the aeskey for the target
-* `kerberos` use Kerberos authentication, which can be either `"True"` or `"False"`
-
-### get_file_contents
-returns base64 encoded file contents to prevent errors when sending response
-```json
-{
-    "target": {
-    "domain": "string",
-    "dc": "string",
-    "kerberos": "False",
-    "ldap_ssl": "False",
-    "user_name": "",
-    "dc_ip": ""
-  },
-  "kerb": {
-    "password": "",
-    "user_hash": ":",
-    "aeskey": ""
-  },
-  "smb_model": {
+    "username": "string",
+    "hashes": "string",
+    "password": "string",
+    "ns": "string",
+    "kerberos": "string",
     "target_ip": "string",
-    "share": "string",
-    "path": "string"
+    "kdcHost": "string",
+    "scheme": "string",
+    "template_name": "string"
   }
-}
-```
-* `target_ip` the target IP
-* `domain` the target domain
-* `dc` domain controller hostname
-* `user_name` the username
-* `dc_ip` the domain controller IP (not required but recommended)
-* `password` the password for the target (not required)
-* `user_hash` the hash for the user in the format: `lm:nt` (not required)
-* `aeskey` the aeskey for the target
-* `kerberos` use Kerberos authentication, which can be either `"True"` or `"False"`
-* `share` is the name of the share
-* `path` is the path to the file, ex: `\\Users\Administrator\something.txt`
+  ```
+- **Response**: JSON response with config.
 
+#### Set Template Config
 
-### list_dirs
-list directories inside a share. Returns a list of directories and files inside the share/directory
-```json
-{
-    "target": {
+- **URL**: `/adcs/templates/set`
+- **Method**: `POST`
+- **Tags**: `certs`
+- **Description**: Set AD CS template config.
+- **Request Body**:
+  ```json
+  {
+    "dc_ip": "string",
     "domain": "string",
-    "dc": "string",
-    "kerberos": "False",
-    "ldap_ssl": "False",
-    "user_name": "",
-    "dc_ip": ""
-  },
-  "kerb": {
-    "password": "",
-    "user_hash": ":",
-    "aeskey": ""
-  },
-  "smb_model": {
+    "username": "string",
+    "hashes": "string",
+    "password": "string",
+    "ns": "string",
+    "kerberos": "string",
     "target_ip": "string",
-    "share": "string",
-    "path": "string"
+    "scheme": "string",
+    "kdcHost": "string",
+    "template_name": "string",
+    "config_data": {}
   }
-}
-```
-* `target_ip` the target IP
-* `domain` the target domain
-* `dc` domain controller hostname
-* `user_name` the username
-* `dc_ip` the domain controller IP (not required but recommended)
-* `password` the password for the target (not required)
-* `user_hash` the hash for the user in the format: `lm:nt` (not required)
-* `aeskey` the aeskey for the target
-* `kerberos` use Kerberos authentication, which can be either `"True"` or `"False"`
-* `share` is the name of the share
-* `path` is the path to the directory
+  ```
+- **Response**: JSON response with status.
 
-## Winrm
-### cmd
-run a winrm command, returns output as string.
-```json
-{
-    "target": {
+#### Enable Template
+
+- **URL**: `/adcs/templates/enable`
+- **Method**: `POST`
+- **Tags**: `certs`
+- **Description**: Enable AD CS template.
+- **Request Body**:
+  ```json
+  {
+    "dc_ip": "string",
     "domain": "string",
-    "dc": "string",
-    "kerberos": "False",
-    "ldap_ssl": "False",
-    "user_name": "",
-    "dc_ip": ""
-  },
-  "kerb": {
-    "password": "",
-    "user_hash": ":",
-    "aeskey": ""
-  },
-  "winrm_model": {
+    "username": "string",
+    "hashes": "string",
+    "password": "string",
+    "ns": "string",
+    "kerberos": "string",
     "target_ip": "string",
-    "command": "string",
-    "ssl": "false"
+    "scheme": "string",
+    "kdcHost": "string",
+    "template_name": "string",
+    "certificate_authority": "string"
   }
-}
-```
-* `target_ip` the target IP
-* `domain` the target domain
-* `dc` domain controller hostname
-* `user_name` the username
-* `dc_ip` the domain controller IP (not required but recommended)
-* `password` the password for the target (not required)
-* `user_hash` the hash for the user in the format: `lm:nt` (not required)
-* `aeskey` the aeskey for the target
-* `kerberos` use Kerberos authentication, which can be either `"True"` or `"False"`
-* `command` powershell command to run
-* `ssl` SSL? Either "true" or "false"
+  ```
+- **Response**: JSON response with status.
 
-## AD CS
-Yes you heard that right. Even I still don't believe I decided to go through the pain of implementing this. Thankfully most of the code is copied from Certipy. Certipy repo: https://github.com/ly4k/Certipy.git for these you get curl commands. If you don't know what an option does just go to the Certipy source code or read the docs for AD CS
+#### Disable Template
 
-### get templates
-get certificate templates and to graph them in memgraph:
-```bash
-curl -X 'POST' \
-  'http://localhost:9000/adcs/templates/get' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "dc_ip": "10.10.10.1",
-  "domain": "dc.local",
-  "username": "administrator",
-  "hashes": "aaaaa:aaaaaaaaa",
-  "password": "",
-  "kdcHost":"",
-  "ns": "10.10.10.1",
-  "kerberos": "False",
-  "target_ip": "10.10.10.1",
-  "scheme": "ldaps",
-  "vulnerable": "True",
-  "dc_only": "False",
-  "graph": "True"
-}' | jq
-```
+- **URL**: `/adcs/templates/disable`
+- **Method**: `POST`
+- **Tags**: `certs`
+- **Description**: Disable AD CS template.
+- **Request Body**:
+  ```json
+  {
+    "dc_ip": "string",
+    "domain": "string",
+    "username": "string",
+    "hashes": "string",
+    "password": "string",
+    "ns": "string",
+    "kerberos": "string",
+    "target_ip": "string",
+    "scheme": "string",
+    "kdcHost": "string",
+    "template_name": "string",
+    "certificate_authority": "string"
+  }
+  ```
+- **Response**: JSON response with status.
 
+#### Add Officer
 
-### template config
-Get a template's config.
-```bash
-curl -X 'POST' \
-  'http://localhost:9000/adcs/templates/get' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "dc_ip": "10.10.10.1",
-  "domain": "dc.local",
-  "username": "administrator",
-  "hashes": "aaaaa:aaaaaaaaa",
-  "password": "",
-  "kdcHost": "",
-  "ns": "10.10.10.1",
-  "kerberos": "False",
-  "target_ip": "10.10.10.1",
-  "scheme": "ldaps",
-  "template_name": "template name"
-}' | jq
-```
+- **URL**: `/adcs/officers/add`
+- **Method**: `POST`
+- **Tags**: `certs`
+- **Description**: Add a certificate officer.
+- **Request Body**:
+  ```json
+  {
+    "dc_ip": "string",
+    "domain": "string",
+    "username": "string",
+    "hashes": "string",
+    "password": "string",
+    "ns": "string",
+    "kerberos": "string",
+    "target_ip": "string",
+    "scheme": "string",
+    "kdcHost": "string",
+    "officer_name": "string",
+    "certificate_authority": "string"
+  }
+  ```
+- **Response**: JSON response with status.
 
-### set template config
-set a configuration for a template in AD CS.
-```bash
-curl -X 'POST' \
-  'http://localhost:9000/adcs/templates/get' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "dc_ip": "10.10.10.1",
-  "domain": "dc.local",
-  "username": "administrator",
-  "hashes": "aaaaa:aaaaaaaaa",
-  "password": "",
-  "kdcHost":"",
-  "ns": "10.10.10.1",
-  "kerberos": "False",
-  "target_ip": "10.10.10.1",
-  "scheme": "ldaps",
-  "template_name": "template name",
-  "config": {}
-}' | jq
-```
+#### Delete Officer
 
+- **URL**: `/adcs/officers/delete`
+- **Method**: `POST`
+- **Tags**: `certs`
+- **Description**: Delete a certificate officer.
+- **Request Body**:
+  ```json
+  {
+    "dc_ip": "string",
+    "domain": "string",
+    "username": "string",
+    "hashes": "string",
+    "password": "string",
+    "ns": "string",
+    "kerberos": "string",
+    "target_ip": "string",
+    "scheme": "string",
+    "kdcHost": "string",
+    "officer_name": "string",
+    "certificate_authority": "string"
+  }
+  ```
+- **Response**: JSON response with status.
 
-## Scripting and Examples
-go to the 'examples' folder to see examples of how to use the API.
+#### Add Manager
 
-```bash
-./examples/
-├── asrep.py
-├── __init__.py
-├── kerberoast_spns.py
-└── rbcd.py
-```
+- **URL**: `/adcs/managers/add`
+- **Method**: `POST`
+- **Tags**: `certs`
+- **Description**: Add a certificate manager.
+- **Request Body**:
+  ```json
+  {
+    "dc_ip": "string",
+    "domain": "string",
+    "username": "string",
+    "hashes": "string",
+    "password": "string",
+    "ns": "string",
+    "kerberos": "string",
+    "target_ip": "string",
+    "scheme": "string",
+    "kdcHost": "string",
+    "manager_name": "string",
+    "certificate_authority": "string"
+  }
+  ```
+- **Response**: JSON response with status.
+
+#### Delete Manager
+
+- **URL**: `/adcs/managers/delete`
+- **Method**: `POST`
+- **Tags**: `certs`
+- **Description**: Delete a certificate manager.
+- **Request Body**:
+  ```json
+  {
+    "dc_ip": "string",
+    "domain": "string",
+    "username": "string",
+    "hashes": "string",
+    "password": "string",
+    "ns": "string",
+    "kerberos": "string",
+    "target_ip": "string",
+    "scheme": "string",
+    "kdcHost": "string",
+    "manager_name": "string",
+    "certificate_authority": "string"
+  }
+  ```
+- **Response**: JSON response with status.
+
+#### Auto Shadow
+
+- **URL**: `/adcs/shadow/auto`
+- **Method**: `POST`
+- **Tags**: `certs`
+- **Description**: Automatically shadow a certificate.
+- **Request Body**:
+  ```json
+  {
+    "dc_ip": "string",
+    "domain": "string",
+    "username": "string",
+    "hashes": "string",
+    "password": "string",
+    "ns": "string",
+    "kerberos": "string",
+    "target_ip": "string",
+    "scheme": "string",
+    "kdcHost": "string",
+    "target_account": "string"
+  }
+  ```
+- **Response**: JSON response with status.
