@@ -73,11 +73,7 @@ API documentation only contains working and documented routes
       "dc_ip": "string"
     },
     "kerb": {
-      "password": "string",
-      "user_hash": "string",
-      "aeskey": "string",
       "get_hash": "string",
-      "kdcHost": "string"
     }
   }
   ```
