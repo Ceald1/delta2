@@ -230,7 +230,7 @@ async def asreproast(target: Target, kerb: Kerberos):
                 h = 'Nil'
         if e != "nil":
 
-                data = {'user': user_name, "asrep_data": f'error occured: {str(e)}'}
+                data = {'user': user_name, "asrep_data": f'error occurred: {str(e)}'}
         else:
                 if get_hash == True or get_hash == "True":
                         data = {'user': user_name, "asrep_data": h}
