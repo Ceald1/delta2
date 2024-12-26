@@ -15,6 +15,7 @@ import argparse
 from bloodyAD.network.ldap import Change, Scope
 
 import ldap3
+import  msldap
 
 from bloodyAD import utils
 
@@ -194,9 +195,15 @@ class Objeditor:
     
     def edit_obj(self, obj_name:str, property_:dict):
         target_property = list(property_.keys())[0]
-        op = [(ldap3.MODIFY_REPLACE), [property_[target_property]]]
+        v = property_[target_property].split(",")
+        raw = False
+        tmp_ = []
+        for i in v:
+             tmp_.append(i.encode())
+        v = tmp_
+        # op = {attribute: [(Change.REPLACE.value, v)]}, encode=(not raw)
         try:
-            self.ldap.bloodymodify(obj_name, op)
+            self.ldap.bloodymodify(obj_name, {target_property: [(Change.REPLACE.value, v)]}, encode=(not raw))
             return {"name": obj_name, "modified_property": property_}
         except Exception as e:
             raise e
