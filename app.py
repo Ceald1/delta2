@@ -697,7 +697,7 @@ def editobj(target: Target, kerb: Kerberos, ops: editor):
 
                 if action == "edit_obj":
                         property_modify = ast.literal_eval(ops.property_modify)
-                        data = objeditor.edit_obj(target=target_obj, property_=property_modify)
+                        data = objeditor.edit_obj(obj_name=target_obj, property_=property_modify)
 
 
                 return {"response": data}
