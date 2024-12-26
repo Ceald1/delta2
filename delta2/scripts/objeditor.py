@@ -12,6 +12,7 @@ from bloodyAD.formatters.formatters import (
     formatWellKnownObjects,
 )
 import argparse
+from bloodyAD.network.ldap import Change, Scope
 
 import ldap3
 
@@ -47,11 +48,11 @@ class Objeditor:
     def add_genericall(self, source_account, target):
         """ Add genericAll """
         trustee = source_account
-        new_sd, _ = utils.getSD(conn, target)
+        new_sd, _ = utils.getSD(self.conn, target)
         if "s-1-" in trustee.lower():
             trustee_sid = trustee
         else:
-            trustee_sid = next(conn.ldap.bloodysearch(trustee, attr=["objectSid"]))[
+            trustee_sid = next(self.conn.ldap.bloodysearch(trustee, attr=["objectSid"]))[
                 "objectSid"
             ]
         utils.addRight(new_sd, trustee_sid)
@@ -59,7 +60,7 @@ class Objeditor:
             {"Flags": accesscontrol.DACL_SECURITY_INFORMATION}
         )
         controls = [("1.2.840.113556.1.4.801", True, req_flags.dump())]
-        conn.ldap.bloodymodify(
+        self.conn.ldap.bloodymodify(
             target,
             {"nTSecurityDescriptor": [(Change.REPLACE.value, new_sd.getData())]},
             controls,
@@ -80,10 +81,10 @@ class Objeditor:
                     container = obj.dn
                     break
             if not container:
-                LOG.warning(
-                    "Default container for computers not found, defaulting to CN=Computers,"
-                    + self.conn.ldap.domainNC
-                )
+                # LOG.warning(
+                #     "Default container for computers not found, defaulting to CN=Computers,"
+                #     + self.conn.ldap.domainNC
+                # )
                 container = "cn=Computers" + self.conn.ldap.domainNC
             computer_dn = f"cn={hostname},{container}"
         else:
@@ -120,7 +121,7 @@ class Objeditor:
         if 's-1-' in member.lower():
             member = f'<SID={member}>'
         else:
-            member = conn.ldap.dnResolver(member)
+            member = self.conn.ldap.dnResolver(member)
         self.ldap.bloodymodify(group, {"member": (ldap3.MODIFY_ADD, member)})
         return {"name": group, 'added': member}
     
