@@ -196,7 +196,7 @@ class Objeditor:
         target_property = list(property_.keys())[0]
         op = [(ldap3.MODIFY_REPLACE), [property_[target_property]]]
         try:
-            self.ldap.bloodymodify(obj, op)
+            self.ldap.bloodymodify(obj_name, op)
             return {"name": obj_name, "modified_property": property_}
         except Exception as e:
             raise e
