@@ -359,7 +359,7 @@ Here is the modified markdown documentation to fit the new route and the updated
     <!-- - `oldpass`: The old password for the object. -->
     - `group`: The name of the group.
     - `ou`: The organizational unit.
-    - `container`: The container name.
+    <!-- - `container`: The container name. -->
     - `service`: The service name.
     - `property_modify`: The properties to modify (in JSON string format).
     - `source_account`: The source account for DACL edit.

@@ -20,7 +20,6 @@ import  msldap
 from bloodyAD import utils
 
 
-
 class Objeditor:
     def __init__(self, username,dc, domain, dc_ip,scheme='ldap', password="", lmhash="", nthash="", kerberos=False, aeskey=""):
         self.username = username
