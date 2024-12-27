@@ -609,104 +609,184 @@ async def collect(target: Target, kerb: Kerberos):
                 return {"response": str(e)}
         
 
+# class editor(BaseModel):
+#         option: str= ""
+#         computer_name: str = ""
+#         computer_pass: str= ""
+#         target_obj: str= ""
+#         new_pass: str = ""
+#         oldpass: str = ""
+#         group: str = ""
+#         ou: str=""
+#         container: str=""
+#         service: str=""
+#         property_modify: str=""
+#         source_account: str=""
+
+# from delta2.scripts.objeditor import Objeditor
+# import ast
+# @app.post("/ldap/objeditor", tags=['ldap'])
+# def editobj(target: Target, kerb: Kerberos, ops: editor):
+#         """ Object editor options are: add_computer, add_member, edit_pass, delete_group_member, delete, add_rbcd """
+#         domain = target.domain
+#         username = target.user_name
+#         password = kerb.password
+#         dc = target.dc
+#         dc_ip = target.dc_ip
+#         db_location = uri
+#         db_name = name
+#         ntlm = kerb.user_hash
+#         source_account = ops.source_account
+#         lm = ntlm.split(":")[0]
+#         nt = ntlm.split(":")[-1]
+
+#         e =  "nil"
+#         aeskey = kerb.aeskey
+#         kerberos_auth = target.kerberos
+#         ldap_ssl = target.ldap_ssl
+#         if kerberos_auth == "False":
+#                 kerberos_auth = False
+#         else:
+#                 kerberos_auth = True
+#         if ldap_ssl == "False":
+#                 scheme = "ldap"
+#         else:
+#                 scheme = "ldaps"
+        
+#         objeditor = Objeditor(username=username, dc=dc, domain=domain, dc_ip=dc_ip, 
+#                         scheme=scheme, password=password, lmhash=lm, nthash=nt, 
+#                         kerberos=kerberos_auth, aeskey=aeskey)
+#         action = ops.option
+#         methods = [method for method in dir(objeditor) if callable(getattr(objeditor, method))]
+        
+
+
+#         computer_name = ops.computer_name
+#         computer_pass = ops.computer_pass
+#         target_obj = ops.target_obj
+#         new_pass = ops.new_pass
+#         old_pass = ops.oldpass
+#         group = ops.group
+#         ou = ops.ou
+#         container = ops.container
+#         service = ops.service
+
+
+#         if action not in methods:
+#                 return {"response": f"error: action '{action}' not in Objeditor class!"}
+#         try:
+#                 if action == "add_computer":
+#                         data = objeditor.add_computer(computername=computer_name, computerpass=computer_pass, container=container, ou=ou)
+#                 if action == "add_member":
+#                         data = objeditor.add_member(group=group, member=target_obj)
+#                 if action == "edit_pass":
+#                         if old_pass == "":
+#                                 old_pass = None
+#                         data = objeditor.edit_pass(target_user=target_obj, newpass=new_pass, oldpass=old_pass)
+#                 if action == "delete_group_member":
+#                         data = objeditor.delete_group_member(member=target_obj, group=group)
+#                 if action == "delete":
+#                         data = objeditor.delete(obj=target_obj)
+                
+#                 if action == "add_genericall":
+#                         data = objeditor.add_genericall(source_account=source_account, target=target_obj)
+
+#                 if action == "add_rbcd":
+#                         data = objeditor.add_rbcd(target=target_obj, service=service)
+
+#                 if action == "edit_obj":
+#                         property_modify = ast.literal_eval(ops.property_modify)
+#                         data = objeditor.edit_obj(obj_name=target_obj, property_=property_modify)
+
+
+#                 return {"response": data}
+
+#         except Exception as a:
+#                 print(traceback.format_exc())
+#                 e = a
+#                 return {"response": f"error: {e}"}
+
 class editor(BaseModel):
-        option: str= ""
-        computer_name: str = ""
-        computer_pass: str= ""
-        target_obj: str= ""
-        new_pass: str = ""
-        oldpass: str = ""
-        group: str = ""
-        ou: str=""
-        container: str=""
-        service: str=""
-        property_modify: str=""
-        source_account: str=""
+    option: str = ""
+    computer_name: str = ""
+    computer_pass: str = ""
+    target_obj: str = ""
+    new_pass: str = ""
+    group: str = ""
+    ou: str = ""
+    service: str = ""
+    property_modify: str = ""
+    source_account: str = ""
 
-
-from delta2.scripts.objeditor import Objeditor
+from delta2.scripts.new_editor import Objeditor
 import ast
+
 @app.post("/ldap/objeditor", tags=['ldap'])
 def editobj(target: Target, kerb: Kerberos, ops: editor):
-        """ Object editor options are: add_computer, add_member, edit_pass, delete_group_member, delete, add_rbcd """
-        domain = target.domain
-        username = target.user_name
-        password = kerb.password
-        dc = target.dc
-        dc_ip = target.dc_ip
-        db_location = uri
-        db_name = name
-        ntlm = kerb.user_hash
-        source_account = ops.source_account
-        lm = ntlm.split(":")[0]
-        nt = ntlm.split(":")[-1]
+    """ Object editor options are: add_object, add_member, edit_obj, delete, dacl_edit, owner, add_rbcd """
+    domain = target.domain
+    username = target.user_name
+    password = kerb.password
+    dc = target.dc
+    dc_ip = target.dc_ip
+    ntlm = kerb.user_hash
+    source_account = ops.source_account
+    lm = ntlm.split(":")[0]
+    nt = ntlm.split(":")[-1]
+    right = list(ast.literal_eval(ops.property_modify).keys())[0]
 
-        e =  "nil"
-        aeskey = kerb.aeskey
-        kerberos_auth = target.kerberos
-        ldap_ssl = target.ldap_ssl
-        if kerberos_auth == "False":
-                kerberos_auth = False
+    aeskey = kerb.aeskey
+    kerberos_auth = target.kerberos
+    ldap_ssl = target.ldap_ssl
+    kerberos_auth = kerberos_auth.lower() == "true"
+    scheme = "ldaps" if ldap_ssl.lower() == "true" else "ldap"
+    
+    objeditor = Objeditor(username=username, dc=dc, domain=domain, dc_ip=dc_ip, 
+                          scheme=scheme, password=password, lmhash=lm, nthash=nt, 
+                          kerberos=kerberos_auth, aeskey=aeskey)
+    
+    action = ops.option
+    methods = [method for method in dir(objeditor) if callable(getattr(objeditor, method))]
+
+    computer_name = ops.computer_name
+    computer_pass = ops.computer_pass
+    target_obj = ops.target_obj
+    new_pass = ops.new_pass
+    group = ops.group
+    ou = ops.ou
+    service = ops.service
+
+    if action not in methods:
+        return {"response": f"error: action '{action}' not in Objeditor class!"}
+    
+    try:
+        if action == "add_object":
+            object_type = "computer" if computer_name else "user"
+            name = computer_name if computer_name else target_obj
+            pass_to_use = computer_pass if computer_pass else new_pass
+            data = objeditor.add_object(object_type=object_type, name=name, ou=ou, new_pass=pass_to_use)
+        elif action == "add_member":
+            data = objeditor.add_member(group=group, member=target_obj)
+        elif action == "edit_obj":
+            property_modify = ast.literal_eval(ops.property_modify)
+            data = objeditor.edit_obj(obj_name=target_obj, property_=property_modify)
+        elif action == "delete":
+            data = objeditor.delete(obj=target_obj)
+        elif action == "dacl_edit":
+            data = objeditor.dacl_edit(source_account=source_account, target=target_obj, right=right)
+            
+        elif action == "owner":
+            data = objeditor.owner(target=target_obj, owner=source_account)
+        elif action == "add_rbcd":
+            data = objeditor.add_rbcd(target=target_obj, service=service)
         else:
-                kerberos_auth = True
-        if ldap_ssl == "False":
-                scheme = "ldap"
-        else:
-                scheme = "ldaps"
-        
-        objeditor = Objeditor(username=username, dc=dc, domain=domain, dc_ip=dc_ip, 
-                        scheme=scheme, password=password, lmhash=lm, nthash=nt, 
-                        kerberos=kerberos_auth, aeskey=aeskey)
-        action = ops.option
-        methods = [method for method in dir(objeditor) if callable(getattr(objeditor, method))]
-        
+            return {"response": f"error: action '{action}' not implemented in the API!"}
 
+        return {"response": data}
 
-        computer_name = ops.computer_name
-        computer_pass = ops.computer_pass
-        target_obj = ops.target_obj
-        new_pass = ops.new_pass
-        old_pass = ops.oldpass
-        group = ops.group
-        ou = ops.ou
-        container = ops.container
-        service = ops.service
-
-
-        if action not in methods:
-                return {"response": f"error: action '{action}' not in Objeditor class!"}
-        try:
-                if action == "add_computer":
-                        data = objeditor.add_computer(computername=computer_name, computerpass=computer_pass, container=container, ou=ou)
-                if action == "add_member":
-                        data = objeditor.add_member(group=group, member=target_obj)
-                if action == "edit_pass":
-                        if old_pass == "":
-                                old_pass = None
-                        data = objeditor.edit_pass(target_user=target_obj, newpass=new_pass, oldpass=old_pass)
-                if action == "delete_group_member":
-                        data = objeditor.delete_group_member(member=target_obj, group=group)
-                if action == "delete":
-                        data = objeditor.delete(obj=target_obj)
-                
-                if action == "add_genericall":
-                        data = objeditor.add_genericall(source_account=source_account, target=target_obj)
-
-                if action == "add_rbcd":
-                        data = objeditor.add_rbcd(target=target_obj, service=service)
-
-                if action == "edit_obj":
-                        property_modify = ast.literal_eval(ops.property_modify)
-                        data = objeditor.edit_obj(obj_name=target_obj, property_=property_modify)
-
-
-                return {"response": data}
-
-        except Exception as a:
-                print(traceback.format_exc())
-                e = a
-                return {"response": f"error: {e}"}
-
+    except Exception as e:
+        print(traceback.format_exc())
+        return {"response": f"error: {str(e)}"}
 
 
 class MSSQL(BaseModel):

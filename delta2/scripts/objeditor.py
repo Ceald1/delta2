@@ -162,7 +162,35 @@ class Objeditor:
 
 
 
+    def owner(self, target: str, owner: str):
+        """
+        Changes target ownership with provided owner (WriteOwner permission required)
 
+        :param target: sAMAccountName, DN, GUID or SID of the target
+        :param owner: sAMAccountName, DN, GUID or SID of the new owner
+        """
+        new_sid = next(self.ldap.bloodysearch(owner, attr=["objectSid"]))["objectSid"]
+
+        new_sd, _ = utils.getSD(
+            self.conn, target, "nTSecurityDescriptor", accesscontrol.OWNER_SECURITY_INFORMATION
+        )
+
+        old_sid = new_sd["OwnerSid"].formatCanonical()
+        # if old_sid == new_sid:
+        #     print(f"[!] {old_sid} is already the owner, no modification will be made")
+        # else:
+        new_sd["OwnerSid"].fromCanonical(new_sid)
+
+        req_flags = msldap.wintypes.asn1.sdflagsrequest.SDFlagsRequestValue(
+            {"Flags": accesscontrol.OWNER_SECURITY_INFORMATION}
+        )
+        controls = [("1.2.840.113556.1.4.801", True, req_flags.dump())]
+
+        self.ldap.bloodymodify(
+            target,
+            {"nTSecurityDescriptor": [(Change.REPLACE.value, new_sd.getData())]},
+            controls,
+        )
 
 
     def edit_pass(self, target_user, newpass, oldpass=None):

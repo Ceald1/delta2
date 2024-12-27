@@ -296,12 +296,14 @@ API documentation only contains working and documented routes
   ```
 - **Response**: JSON response with collection status.
 
-#### Edit Object
+Here is the modified markdown documentation to fit the new route and the updated class:
+
+#### Edit LDAP Object
 
 - **URL**: `/ldap/objeditor`
 - **Method**: `POST`
 - **Tags**: `ldap`
-- **Description**: Edit LDAP object.
+- **Description**: Edit LDAP object using various operations like adding a computer, member, editing password, deleting object, and more.
 - **Request Body**:
   ```json
   {
@@ -326,18 +328,48 @@ API documentation only contains working and documented routes
       "computer_pass": "string",
       "target_obj": "string",
       "new_pass": "string",
-      "oldpass": "string",
       "group": "string",
       "ou": "string",
-      "container": "string",
       "service": "string",
       "property_modify": "string",
       "source_account": "string"
     }
   }
   ```
-- **Response**: JSON response with edit status.
+- **Request Body Description**:
+  - `target`:
+    - `domain`: The domain name.
+    - `dc`: The domain controller.
+    - `kerberos`: Indicates if Kerberos authentication is used ("True" or "False").
+    - `ldap_ssl`: Indicates if LDAP SSL is used ("True" or "False").
+    - `user_name`: The username for authentication.
+    - `dc_ip`: The IP address of the domain controller.
+  - `kerb`:
+    - `password`: The password for authentication.
+    - `user_hash`: The NTLM hash of the user.
+    - `aeskey`: The AES key for Kerberos authentication.
+    - `get_hash`: Option to get hash (not used in the method).
+    - `kdcHost`: The KDC host (not used in the method).
+  - `ops`:
+    - `option`: The action to perform (e.g., "add_computer", "add_member", "edit_pass", "delete_group_member", "delete", "add_rbcd").
+    - `computer_name`: The name of the computer to add.
+    - `computer_pass`: The password for the computer to add.
+    - `target_obj`: The target object to modify.
+    - `new_pass`: The new password for the object.
+    <!-- - `oldpass`: The old password for the object. -->
+    - `group`: The name of the group.
+    - `ou`: The organizational unit.
+    - `container`: The container name.
+    - `service`: The service name.
+    - `property_modify`: The properties to modify (in JSON string format).
+    - `source_account`: The source account for DACL edit.
 
+- **Response**: JSON response with the status of the edit operation.
+  ```json
+  {
+    "response": "string"
+  }
+  ```
 ### MSSQL
 
 #### Run Query
