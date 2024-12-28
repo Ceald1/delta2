@@ -79,13 +79,14 @@ class Shadow:
     
     def get_key_and_certificate(self, cert: X509Certificate2) -> Tuple[rsa.RSAPrivateKey, x509.Certificate]:
         key = der_to_key(
-            OpenSSL.crypto.dump_privatekey(
-                OpenSSL.crypto.FILETYPE_ASN1, cert.certificate))
+            OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_ASN1, cert.key)
+        )
         cert = der_to_cert(
             OpenSSL.crypto.dump_certificate(
                 OpenSSL.crypto.FILETYPE_ASN1, cert.certificate
             )
         )
+
         return (key, cert)
     
     def auto(self):

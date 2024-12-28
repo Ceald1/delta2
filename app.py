@@ -1188,7 +1188,7 @@ def get_templates(certs: Get_Certs):
         kerberos = ast.literal_eval(certs.kerberos)
         target = CertipyTarget()
         target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, dc_ip=dc_ip, remote_name=kdc)
-
+        print(target.__dict__)
         connection = Connection(target=target, scheme=scheme)
 
         find = Find(target=target, connection=connection, json=True, scheme=scheme)
@@ -1242,7 +1242,6 @@ def get_config(certs: Cert_config):
         kerberos = ast.literal_eval(certs.kerberos)
         target = CertipyTarget()
         target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, remote_name=kdcHost)
-
         connection = Connection(target=target, scheme=scheme)
         template = Template(connection=connection)
         try:
@@ -1535,13 +1534,15 @@ def auto_shadow(certs: ShadowCerts):
         target_account = certs.target_account
         kerberos = ast.literal_eval(certs.kerberos)
         target = CertipyTarget()
-        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, remote_name=certs.kdcHost)
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, dc_ip=dc_ip, remote_name=certs.kdcHost)
+        print(target.__dict__)
         try:
                 connection = Connection(target=target, scheme=scheme)
                 shadow = Shadow(target=target, connection=connection, account=target_account, scheme=scheme)
                 data = shadow.auto()
         except Exception as e:
-                print(e)
+                print(traceback.format_exc())
+                # print(e)
                 data = str(e)
         return {"response": data}
 

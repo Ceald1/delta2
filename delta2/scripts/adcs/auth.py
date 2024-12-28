@@ -111,7 +111,7 @@ class Authenticate:
         ldap_port:int = 0,
         ldap_scheme:str = "ldaps",
         user_dn: str = None,
-        debug = False):
+        debug = False, ldap_user_dn: str = None, **kwargs):
     
         self.target = target
         self.pfx = pfx
