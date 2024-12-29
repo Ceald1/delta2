@@ -54,6 +54,7 @@ packaging==24.0
 pansi==2020.7.3
 parso==0.8.3
 parsy==2.1
+passlib==1.7.4
 pexpect==4.9.0
 prettytable==2.5.0
 prompt-toolkit==3.0.43

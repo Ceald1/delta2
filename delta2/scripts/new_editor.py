@@ -177,7 +177,7 @@ class Objeditor:
             member = f'<SID={member}>'
         else:
             member = self.conn.ldap.dnResolver(member)
-        self.ldap.bloodymodify(group, {"member": (ldap3.MODIFY_ADD, member)})
+        self.ldap.bloodymodify(group, {"member": [(Change.ADD.value, member)]})
         return {"name": group, 'added': member}
                 
 

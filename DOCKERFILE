@@ -1,9 +1,9 @@
 # Use an official Python runtime as a parent image
-FROM python:3.12.3-slim
+FROM python:3.12.4-slim
 
 # Install system packages required for building Python packages
 RUN apt-get update -y && \
-    apt-get install -y krb5-config libkrb5-dev krb5-user build-essential
+    apt-get install -y krb5-config libkrb5-dev krb5-user build-essential openssl
 
 # Set the working directory in the container
 WORKDIR /app

@@ -1111,11 +1111,13 @@ def mark_pwned(pwn: Pwned):
         data = JSONResponse(data)
         return data
 
-import hashlib, binascii
+# import hashlib, binascii
+from passlib.hash import nthash
 
 def calc_ntlm(passsword) -> str:
-        h = hashlib.new('md4', passsword.encode('utf-16le')).digest()
-        nt = binascii.hexlify(h).decode()
+        nt = nthash.hash(passsword)
+        # h = hashlib.new('md4', passsword.encode('utf-16le')).digest()
+        # nt = binascii.hexlify(h).decode()
         return "aad3b435b51404eeaad3b435b51404ee:" + nt
         # p = self.target.password
         # a = ""
