@@ -76,7 +76,9 @@ art = f"""
 """
 global name
 global uri
-name = None
+name = "memgraph"
+uri = "bolt://127.0.0.1:7687"
+client = GraphDatabase.driver(uri=uri, database=name)
 
 class Dbconfig(BaseModel):
     name: str = "memgraph"
@@ -1109,9 +1111,20 @@ def mark_pwned(pwn: Pwned):
         data = JSONResponse(data)
         return data
 
+import hashlib, binascii
 
-
-
+def calc_ntlm(passsword) -> str:
+        h = hashlib.new('md4', passsword.encode('utf-16le')).digest()
+        nt = binascii.hexlify(h).decode()
+        return "aad3b435b51404eeaad3b435b51404ee:" + nt
+        # p = self.target.password
+        # a = ""
+        # if self.target.password != "":
+        #     a = "aad3b435b51404eeaad3b435b51404ee:" + binascii.hexlify(hashlib.new('md4', p.encode('utf-16le')).digest()).decode()
+        # self.target.hashes = a
+        # self.target.password = ""
+        # print(self.target.__dict__)
+        # return self.target
 
 
 
@@ -1187,6 +1200,9 @@ def get_templates(certs: Get_Certs):
         dc_only = ast.literal_eval(certs.dc_only)
         kerberos = ast.literal_eval(certs.kerberos)
         target = CertipyTarget()
+        if password != "":
+                hashes = calc_ntlm(password)
+                password = ""
         target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, dc_ip=dc_ip, remote_name=kdc)
         print(target.__dict__)
         connection = Connection(target=target, scheme=scheme)
@@ -1241,6 +1257,9 @@ def get_config(certs: Cert_config):
         kdcHost = certs.kdcHost
         kerberos = ast.literal_eval(certs.kerberos)
         target = CertipyTarget()
+        if password != "":
+                hashes = calc_ntlm(password)
+                password = ""
         target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, remote_name=kdcHost)
         connection = Connection(target=target, scheme=scheme)
         template = Template(connection=connection)
@@ -1285,6 +1304,9 @@ def set_config(certs: Set_Cert_Config):
         kdchost = certs.kdcHost
         kerberos = ast.literal_eval(certs.kerberos)
         target = CertipyTarget()
+        if password != "":
+                hashes = calc_ntlm(password)
+                password = ""
         target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, remote_name=kdchost)
         cert_conf = certs.config_data
 
@@ -1330,6 +1352,9 @@ def enable_template(certs: Cert_enable_disable):
         scheme = certs.scheme
         kerberos = ast.literal_eval(certs.kerberos)
         target = CertipyTarget()
+        if password != "":
+                hashes = calc_ntlm(password)
+                password = ""
         target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, remote_name=certs.kdcHost)
         authority = certs.certificate_authority
         try:
@@ -1359,6 +1384,9 @@ def disable_template(certs: Cert_enable_disable):
         scheme = certs.scheme
         kerberos = ast.literal_eval(certs.kerberos)
         target = CertipyTarget()
+        if password != "":
+                hashes = calc_ntlm(password)
+                password = ""
         target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, remote_name=certs.kdcHost)
         authority = certs.certificate_authority
         try:
@@ -1399,6 +1427,9 @@ def add_officer(certs: Cert_officer):
         scheme = certs.scheme
         kerberos = ast.literal_eval(certs.kerberos)
         target = CertipyTarget()
+        if password != "":
+                hashes = calc_ntlm(password)
+                password = ""
         target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, remote_name=certs.kdcHost)
         authority = certs.certificate_authority
         officer = certs.officer_name
@@ -1427,6 +1458,9 @@ def delete_officer(certs: Cert_officer):
         scheme = certs.scheme
         kerberos = ast.literal_eval(certs.kerberos)
         target = CertipyTarget()
+        if password != "":
+                hashes = calc_ntlm(password)
+                password = ""
         target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, remote_name=certs.kdcHost)
         authority = certs.certificate_authority
         officer = certs.officer_name
@@ -1468,6 +1502,9 @@ def add_manager(certs: Cert_manager):
         scheme = certs.scheme
         kerberos = ast.literal_eval(certs.kerberos)
         target = CertipyTarget()
+        if password != "":
+                hashes = calc_ntlm(password)
+                password = ""
         target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, remote_name=certs.kdcHost)
         authority = certs.certificate_authority
         manager = certs.manager_name
@@ -1496,6 +1533,9 @@ def delete_manager(certs: Cert_manager):
         scheme = certs.scheme
         kerberos = ast.literal_eval(certs.kerberos)
         target = CertipyTarget()
+        if password != "":
+                hashes = calc_ntlm(password)
+                password = ""
         target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, remote_name=certs.kdcHost)
         authority = certs.certificate_authority
         manager = certs.manager_name
@@ -1533,11 +1573,14 @@ def auto_shadow(certs: ShadowCerts):
         scheme = certs.scheme
         target_account = certs.target_account
         kerberos = ast.literal_eval(certs.kerberos)
+        if password != "":
+                hashes = calc_ntlm(password)
+                password = ""
         target = CertipyTarget()
         target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, dc_ip=dc_ip, remote_name=certs.kdcHost)
-        print(target.__dict__)
+        connection = Connection(target=target, scheme=scheme)
         try:
-                connection = Connection(target=target, scheme=scheme)
+                # connection = Connection(target=target, scheme=scheme)
                 shadow = Shadow(target=target, connection=connection, account=target_account, scheme=scheme)
                 data = shadow.auto()
         except Exception as e:
@@ -1549,9 +1592,10 @@ def auto_shadow(certs: ShadowCerts):
 
 if __name__ == '__main__':
         from fastapi.middleware.cors import CORSMiddleware
+        
         print(art)
         parser = argparse.ArgumentParser()
-        parser.add_argument('-uri', help='memgraph host with port', type=str, default='bolt://memgraph:7687',action="store")
+        parser.add_argument('-uri', help='memgraph host with port', type=str, default='bolt://127.0.0.1:7687',action="store")
         parser.add_argument('-db_name', help='memgraph db name', type=str, default='memgraph',action="store")
         options = parser.parse_args()
 
@@ -1570,4 +1614,4 @@ if __name__ == '__main__':
     allow_methods=["*"],
     allow_headers=["*"],
 )
-        uvicorn.run(app, host=host, port=port)
+        uvicorn.run(app, host=host, port=int(port))

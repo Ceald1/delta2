@@ -21,4 +21,5 @@ EXPOSE 9000
 ENV NAME World
 
 # Run app.py when the container launches
-CMD ["python", "app.py", "-uri", "bolt://127.0.0.1:7687"]
+# CMD ["python", "app.py", "-uri", "bolt://127.0.0.1:7687"]
+CMD ["uvicorn", "main:app", "--workers", "4", "--port", "9000", "--host", "0.0.0.0"]
