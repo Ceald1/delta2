@@ -1163,6 +1163,7 @@ from delta2.scripts.adcs.ldap import Connection
 from certipy.lib.target import Target as CertipyTarget
 from delta2.scripts.adcs.find import Find
 from delta2.scripts.adcs.shadow import Shadow
+from delta2.scripts.adcs.account import Account
 
 from dns.resolver import Resolver
 
@@ -1590,6 +1591,156 @@ def auto_shadow(certs: ShadowCerts):
                 # print(e)
                 data = str(e)
         return {"response": data}
+
+
+class AccountCerts(BaseModel):
+        dc_ip: str
+        domain: str
+        username: str
+        hashes: str
+        password: str
+        ns: str
+        kerberos: str = "False"
+        target_ip: str
+        scheme: str = "ldaps"
+        kdcHost: str = ""
+        target_account: str
+        dns: str = ""
+        upn: str = ""
+        sam: str = ""
+        spns: str = ""
+        passw: str = ""
+        group: str = ""
+
+
+@app.post("/adcs/account/create", tags=['certs'])
+def create_account(certs: AccountCerts):
+        dc_ip = certs.dc_ip
+        domain = certs.domain
+        username = certs.username
+        hashes = certs.hashes
+        password = certs.password
+        ns = certs.ns
+        target_ip = certs.target_ip
+        scheme = certs.scheme
+        target_account = certs.target_account
+        kerberos = ast.literal_eval(certs.kerberos)
+        dns = certs.dns
+        upn = certs.upn
+        sam = certs.sam
+        spns = certs.spns
+        passw = certs.passw
+        group = certs.group
+        if password != "":
+                hashes = calc_ntlm(password)
+                password = ""
+        target = CertipyTarget()
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, dc_ip=dc_ip, remote_name=certs.kdcHost)
+        connection = Connection(target=target, scheme=scheme)
+        try:
+                account = Account(target=target, connection=connection, target_user=target_account, dns=dns, upn=upn, sam=sam, spns=spns, passw=passw, group=group, scheme=scheme)
+                data = account.create()
+        except Exception as e:
+                print(traceback.format_exc())
+                data = str(e)
+        return {"response": data}
+
+@app.post("/adcs/account/delete", tags=['certs'])
+def delete_account(certs: AccountCerts):
+        dc_ip = certs.dc_ip
+        domain = certs.domain
+        username = certs.username
+        hashes = certs.hashes
+        password = certs.password
+        ns = certs.ns
+        target_ip = certs.target_ip
+        scheme = certs.scheme
+        target_account = certs.target_account
+        kerberos = ast.literal_eval(certs.kerberos)
+        dns = certs.dns
+        upn = certs.upn
+        sam = certs.sam
+        spns = certs.spns
+        passw = certs.passw
+        group = certs.group
+        if password != "":
+                hashes = calc_ntlm(password)
+                password = ""
+        target = CertipyTarget()
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, dc_ip=dc_ip, remote_name=certs.kdcHost)
+        connection = Connection(target=target, scheme=scheme)
+        try:
+                account = Account(target=target, connection=connection, target_user=target_account, dns=dns, upn=upn, sam=sam, spns=spns, passw=passw, group=group, scheme=scheme)
+                data = account.delete()
+        except Exception as e:
+                print(traceback.format_exc())
+                data = str(e)
+        return {"response": data}
+@app.post("/adcs/account/modify", tags=['certs'])
+def modify_account(certs: AccountCerts):
+        dc_ip = certs.dc_ip
+        domain = certs.domain
+        username = certs.username
+        hashes = certs.hashes
+        password = certs.password
+        ns = certs.ns
+        target_ip = certs.target_ip
+        scheme = certs.scheme
+        target_account = certs.target_account
+        kerberos = ast.literal_eval(certs.kerberos)
+        dns = certs.dns
+        upn = certs.upn
+        sam = certs.sam
+        spns = certs.spns
+        passw = certs.passw
+        group = certs.group
+        if password != "":
+                hashes = calc_ntlm(password)
+                password = ""
+        target = CertipyTarget()
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, dc_ip=dc_ip, remote_name=certs.kdcHost)
+        connection = Connection(target=target, scheme=scheme)
+        try:
+                account = Account(target=target, connection=connection, target_user=target_account, dns=dns, upn=upn, sam=sam, spns=spns, passw=passw, group=group, scheme=scheme)
+                data = account.modify()
+        except Exception as e:
+                print(traceback.format_exc())
+                data = str(e)
+        return {"response": data}
+
+@app.post("/adcs/account/get", tags=['certs'])
+def get_account(certs: AccountCerts):
+        dc_ip = certs.dc_ip
+        domain = certs.domain
+        username = certs.username
+        hashes = certs.hashes
+        password = certs.password
+        ns = certs.ns
+        target_ip = certs.target_ip
+        scheme = certs.scheme
+        target_account = certs.target_account
+        kerberos = ast.literal_eval(certs.kerberos)
+        dns = certs.dns
+        upn = certs.upn
+        sam = certs.sam
+        spns = certs.spns
+        passw = certs.passw
+        group = certs.group
+        if password != "":
+                hashes = calc_ntlm(password)
+                password = ""
+        target = CertipyTarget()
+        target = target.create(domain=domain, username=username, password=password, hashes=hashes,do_kerberos=kerberos, target_ip=target_ip, ns=ns, dc_ip=dc_ip, remote_name=certs.kdcHost)
+        connection = Connection(target=target, scheme=scheme)
+        try:
+                account = Account(target=target, connection=connection, target_user=target_account, dns=dns, upn=upn, sam=sam, spns=spns, passw=passw, group=group, scheme=scheme)
+                data = account.get()
+        except Exception as e:
+                print(traceback.format_exc())
+                data = str(e)
+        return {"response": data}
+
+
 
 
 if __name__ == '__main__':
