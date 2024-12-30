@@ -389,7 +389,7 @@ Create a new LDAP account.
     "username": "admin",
     "hashes": "hashed_value",
     "password": "password",
-    "ns": "namespace",
+    "ns": "string",
     "kerberos": "False",
     "target_ip": "192.168.1.2",
     "scheme": "ldaps",
@@ -430,18 +430,12 @@ Delete an existing LDAP account.
     "username": "admin",
     "hashes": "hashed_value",
     "password": "password",
-    "ns": "namespace",
+    "ns": "string",
     "kerberos": "False",
     "target_ip": "192.168.1.2",
     "scheme": "ldaps",
     "kdcHost": "",
     "target_account": "target_user",
-    "dns": "",
-    "upn": "",
-    "sam": "",
-    "spns": "",
-    "passw": "",
-    "group": ""
 }
 ```
 
@@ -471,7 +465,7 @@ Modify an existing LDAP account.
     "username": "admin",
     "hashes": "hashed_value",
     "password": "password",
-    "ns": "namespace",
+    "ns": "string",
     "kerberos": "False",
     "target_ip": "192.168.1.2",
     "scheme": "ldaps",
@@ -512,18 +506,12 @@ Retrieve information about an LDAP account.
     "username": "admin",
     "hashes": "hashed_value",
     "password": "password",
-    "ns": "namespace",
+    "ns": "string",
     "kerberos": "False",
     "target_ip": "192.168.1.2",
     "scheme": "ldaps",
     "kdcHost": "",
     "target_account": "target_user",
-    "dns": "",
-    "upn": "",
-    "sam": "",
-    "spns": "",
-    "passw": "",
-    "group": ""
 }
 ```
 
