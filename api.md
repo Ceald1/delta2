@@ -370,6 +370,175 @@ Here is the modified markdown documentation to fit the new route and the updated
     "response": "string"
   }
   ```
+
+### Create Account
+Create a new LDAP account.
+
+- **URL:** `/ldap/account/create`
+- **Method:** `POST`
+- **Tags:** `ldap`
+- **Request Body:** `AccountCerts`
+- **Response:** JSON object containing the result of the account creation.
+
+#### Example Request
+
+```json
+{
+    "dc_ip": "192.168.1.1",
+    "domain": "example.com",
+    "username": "admin",
+    "hashes": "hashed_value",
+    "password": "password",
+    "ns": "namespace",
+    "kerberos": "False",
+    "target_ip": "192.168.1.2",
+    "scheme": "ldaps",
+    "kdcHost": "",
+    "target_account": "target_user",
+    "dns": "",
+    "upn": "",
+    "sam": "",
+    "spns": "",
+    "passw": "",
+    "group": ""
+}
+```
+
+#### Example Response
+
+```json
+{
+    "response": "Account created successfully"
+}
+```
+
+### Delete Account
+Delete an existing LDAP account.
+
+- **URL:** `/ldap/account/delete`
+- **Method:** `POST`
+- **Tags:** `ldap`
+- **Request Body:** `AccountCerts`
+- **Response:** JSON object containing the result of the account deletion.
+
+#### Example Request
+
+```json
+{
+    "dc_ip": "192.168.1.1",
+    "domain": "example.com",
+    "username": "admin",
+    "hashes": "hashed_value",
+    "password": "password",
+    "ns": "namespace",
+    "kerberos": "False",
+    "target_ip": "192.168.1.2",
+    "scheme": "ldaps",
+    "kdcHost": "",
+    "target_account": "target_user",
+    "dns": "",
+    "upn": "",
+    "sam": "",
+    "spns": "",
+    "passw": "",
+    "group": ""
+}
+```
+
+#### Example Response
+
+```json
+{
+    "response": "Account deleted successfully"
+}
+```
+
+### Modify Account
+Modify an existing LDAP account.
+
+- **URL:** `/ldap/account/modify`
+- **Method:** `POST`
+- **Tags:** `ldap`
+- **Request Body:** `AccountCerts`
+- **Response:** JSON object containing the result of the account modification.
+
+#### Example Request
+
+```json
+{
+    "dc_ip": "192.168.1.1",
+    "domain": "example.com",
+    "username": "admin",
+    "hashes": "hashed_value",
+    "password": "password",
+    "ns": "namespace",
+    "kerberos": "False",
+    "target_ip": "192.168.1.2",
+    "scheme": "ldaps",
+    "kdcHost": "",
+    "target_account": "target_user",
+    "dns": "",
+    "upn": "",
+    "sam": "",
+    "spns": "",
+    "passw": "",
+    "group": ""
+}
+```
+
+#### Example Response
+
+```json
+{
+    "response": "Account modified successfully"
+}
+```
+
+### Get Account
+Retrieve information about an LDAP account.
+
+- **URL:** `/ldap/account/get`
+- **Method:** `POST`
+- **Tags:** `ldap`
+- **Request Body:** `AccountCerts`
+- **Response:** JSON object containing the account information.
+
+#### Example Request
+
+```json
+{
+    "dc_ip": "192.168.1.1",
+    "domain": "example.com",
+    "username": "admin",
+    "hashes": "hashed_value",
+    "password": "password",
+    "ns": "namespace",
+    "kerberos": "False",
+    "target_ip": "192.168.1.2",
+    "scheme": "ldaps",
+    "kdcHost": "",
+    "target_account": "target_user",
+    "dns": "",
+    "upn": "",
+    "sam": "",
+    "spns": "",
+    "passw": "",
+    "group": ""
+}
+```
+
+#### Example Response
+
+```json
+{
+    "response": "Account information retrieved successfully"
+}
+```
+
+## Error Handling
+Each endpoint includes a try-except block to catch any exceptions that occur during the execution of the request. If an exception is caught, the response will contain the error message.
+
+
 ### MSSQL
 
 #### Run Query
