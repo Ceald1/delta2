@@ -1613,7 +1613,7 @@ class AccountCerts(BaseModel):
         group: str = ""
 
 
-@app.post("/adcs/account/create", tags=['certs'])
+@app.post("/ldap/account/create", tags=['ldap'])
 def create_account(certs: AccountCerts):
         dc_ip = certs.dc_ip
         domain = certs.domain
@@ -1645,7 +1645,7 @@ def create_account(certs: AccountCerts):
                 data = str(e)
         return {"response": data}
 
-@app.post("/adcs/account/delete", tags=['certs'])
+@app.post("/ldap/account/delete", tags=['ldap'])
 def delete_account(certs: AccountCerts):
         dc_ip = certs.dc_ip
         domain = certs.domain
@@ -1676,7 +1676,7 @@ def delete_account(certs: AccountCerts):
                 print(traceback.format_exc())
                 data = str(e)
         return {"response": data}
-@app.post("/adcs/account/modify", tags=['certs'])
+@app.post("/ldap/account/modify", tags=['ldap'])
 def modify_account(certs: AccountCerts):
         dc_ip = certs.dc_ip
         domain = certs.domain
@@ -1708,7 +1708,7 @@ def modify_account(certs: AccountCerts):
                 data = str(e)
         return {"response": data}
 
-@app.post("/adcs/account/get", tags=['certs'])
+@app.post("/ldap/account/get", tags=['ldap'])
 def get_account(certs: AccountCerts):
         dc_ip = certs.dc_ip
         domain = certs.domain
