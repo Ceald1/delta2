@@ -93,134 +93,238 @@ def is_nested_list(obj):
         return any(isinstance(i, list) for i in obj)
     return False
 
-
-def read_sddl(sddl:str, mds=None):
-    """ Reads the SDDL
+def read_sddl(sddl: str, mds=None):
+    """ 
+    Reads the SDDL and returns a dictionary containing the owner, group, DACL flags (ACEs), and SACL flags if present.
     SDDL syntax: O:owner_sidG:group_sidD:dacl_flags(string_ace1)(string_ace2)…(string_acen)S:sacl_flags(string_ace1)(string_ace2)…(string_acen)
     ACEs syntax: ace_type;ace_flags;rights;object_guid;inherit_object_guid;Trustee_SID;(resource_attribute)
-    returns a dictionary containing the owner, group, dacl_flags (ACEs) and the Sacl_flags if there are any. https://learn.microsoft.com/en-us/windows/win32/ad/how-access-control-works-in-active-directory-domain-services
-    https://itconnect.uw.edu/tools-services-support/it-systems-infrastructure/msinf/other-help/understanding-sddl-syntax/
-
+    
+    Links:
+    - https://learn.microsoft.com/en-us/windows/win32/ad/how-access-control-works-in-active-directory-domain-services
+    - https://itconnect.uw.edu/tools-services-support/it-systems-infrastructure/msinf/other-help/understanding-sddl-syntax/
     """
 
+    # Split SDDL string based on 'G', 'D', 'O', and 'S' identifiers
     split = re.split(r'[GDOS]:', sddl)[1:]
+
+    # Initialize result dictionary with default values
+    result = {"owner": "Nil", 'group': "Nil", 'dacl_flags': "Nil", 'sacl_flags': "Nil"}
+
     try:
-        result = {"owner": split[0], 'group': split[1], 'dacl_flags': split[2], 'sacl_flags': split[3]}
+        result["owner"] = split[0]
+        result["group"] = split[1]
+        result["dacl_flags"] = split[2]
+        result["sacl_flags"] = split[3] if len(split) > 3 else "Nil"
     except IndexError:
-        try:
-            result = {"owner": split[0], 'group': split[1], 'dacl_flags': split[2], 'sacl_flags': "Nil"}
-        except:
-            if not mds:
-                result = {"owner": split[0], 'group': split[1], 'dacl_flags': "Nil", 'sacl_flags': "Nil"}
-                return result
-            else:
-                result = {"owner": split[0], 'group': "Nil", 'dacl_flags': split[1], 'sacl_flags': "Nil"}
-    f_aces = result['dacl_flags'].split(')') # Grab the aces
-    aces = []
+        if not mds:
+            result["dacl_flags"] = split[2] if len(split) > 2 else "Nil"
+        else:
+            result["group"] = split[1] if len(split) > 1 else "Nil"
+            result["dacl_flags"] = split[2] if len(split) > 2 else "Nil"
+    
+    # Extract and format the ACEs from the DACL
+    ace_strings = result['dacl_flags'].split(')')
+    aces = [ace.replace('(', '') for ace in ace_strings if ace]
+    
     decrypted_aces = []
-    if result['sacl_flags'] != "Nil":
-        print(result['sacl_flags'])
-
-
-    for ace in f_aces: # Format the aces for later use.
-        ace = ace.replace('(', '')
-        aces.append(ace)
-    f_aces = []
-    # NT_format: Ace_type, Flags, permissions, trustees, objectSID, SID
+    
     for ace in aces:
-        # ACE syntax: ace_type;ace_flags;rights;object_guid;inherit_object_guid;account_sid;(resource_attribute)
-        componets = ace.split(';')
+        # Split each ACE into its components
+        components = ace.split(';')
 
-        if len(componets) < 5:
+        if len(components) < 6:
             continue
-        ace_type = componets[0]
-        flags = componets[1]
-        rights = componets[2]
-        guid = componets[3]
-        inherit = componets[4]
-        account_sid = componets[5]
-        if rights.startswith("0x"):
-            rights = rights[2:]
-            rights = int(rights, 16) # convert into hex
-        f_ace = {'type': ace_type, # ACE types
-        'flags': flags, # Flags
-        'rights': rights, # Rights
-        'guid': guid, # Object GUID
-        'inherit': inherit, # Inherit
-        'trustee': account_sid} # SID trustee (SID of object being affected)
-        ace_d = ace_type
-        ace_f = ace_type
-        described = ['Nil']
-        for a in ace_f: # format the ACE type
-            try:
-                d = constants.ACE_TYPES[a]
-                described.append(d)
-                ace_d = ace_d.replace(a, '')
-                if "Nil" in described:
-                    described.remove('Nil')
-            except:
-                None
-        if ace_d != '':
-            ace_d = [a + b for a, b in zip(ace_d[::2], ace_d[1::2])]
-            for a in ace_d:
-                d = constants.ACE_TYPES[a]
-                described.append(d)
-                if "Nil" in described:
-                    described.remove('Nil')
-        f_ace['type'] = ', '.join(described) # end format of ACE type
+        
+        ace_dict = {
+            'type': components[0],
+            'flags': components[1],
+            'rights': components[2],
+            'guid': components[3],
+            'inherit': components[4],
+            'trustee': components[5]
+        }
+        
+        # Convert rights to a human-readable format, handling both hex and non-hex values
+        ace_dict['rights'] = convert_rights(ace_dict['rights'])
+        ace_dict['type'] = describe_ace_type(ace_dict['type'])
+        ace_dict['flags'] = describe_ace_flags(ace_dict['flags'])
+        
+        decrypted_aces.append(ace_dict)
 
-        # format the ACE flags
-        flags_d = flags
-        flags_f = flags
-        described = ["Nil"]
-        flags_d = [a + b for a, b in zip(flags_d[::2], flags_d[1::2])]
-        #print(flags_d)
-        for a in flags_d:
-            d = constants.ACE_FLAGS[a]
-            described.append(d)
-            if "Nil" in described:
-                described.remove('Nil')
-        #print(described)
-        f_ace['flags'] = ', '.join(described) # end format of ACE flags
-        ks = list(constants.HEX_PERMISSIONS)
-
-        described = ["Nil"]
-        if type(rights) is int:
-            for k in ks:
-                if rights & k != 0:
-                    described.append(constants.HEX_PERMISSIONS[k])
-                    if "Nil" in described:
-                        described.remove('Nil')
-        if type(rights) is str:
-            rs = [a + b for a, b in zip(rights[::2], rights[1::2])]
-            #print(rs)
-            for r in rs:
-                described.append(constants.Nonhex_PERMISSIONS[r])
-                if "Nil" in described:
-                    described.remove('Nil')
-
-
-        description = ', '.join(described)
-
-
-        f_ace['rights'] = description
-
-        decrypted_aces.append(f_ace)
-    for ace in decrypted_aces:
-        keys = list(ace.keys())
-        for key in keys:
-            if len(ace[key]) < 1:
-                #print(len(ace[key]))
-                ace[key] = "Nil"
-    keys = list(result.keys())
-    for key in keys:
-        l = len(result[key])
-        if l < 1:
-            result[key] = 'Nil'
-
+    # Update the result dictionary with the decrypted ACEs
     result['dacl_flags'] = decrypted_aces
 
     return result
+
+def convert_rights(rights):
+    """ Convert rights to a human-readable format. """
+    described = ["Nil"]
+    if rights.startswith("0x"):
+        rights = int(rights[2:], 16)  # Convert hex to integer
+        for k in constants.HEX_PERMISSIONS:
+            if rights & k:
+                described.append(constants.HEX_PERMISSIONS[k])
+    else:
+        rights_parts = [rights[i:i+2] for i in range(0, len(rights), 2)]
+        for part in rights_parts:
+            described.append(constants.Nonhex_PERMISSIONS.get(part, 'Unknown'))
+
+    if "Nil" in described:
+        described.remove("Nil")
+    
+    return ', '.join(described)
+
+def describe_ace_type(ace_type):
+    """ Convert ACE type to a human-readable format. """
+    described = ["Nil"]
+    ace_parts = [ace_type[i:i+2] for i in range(0, len(ace_type), 2)]
+    for part in ace_parts:
+        described.append(constants.ACE_TYPES.get(part, 'Unknown'))
+
+    if "Nil" in described:
+        described.remove("Nil")
+    
+    return ', '.join(described)
+
+def describe_ace_flags(flags):
+    """ Convert ACE flags to a human-readable format. """
+    described = ["Nil"]
+    flag_parts = [flags[i:i+2] for i in range(0, len(flags), 2)]
+    for part in flag_parts:
+        described.append(constants.ACE_FLAGS.get(part, 'Unknown'))
+
+    if "Nil" in described:
+        described.remove("Nil")
+    
+    return ', '.join(described)
+
+# def read_sddl(sddl:str, mds=None):
+#     """ Reads the SDDL
+#     SDDL syntax: O:owner_sidG:group_sidD:dacl_flags(string_ace1)(string_ace2)…(string_acen)S:sacl_flags(string_ace1)(string_ace2)…(string_acen)
+#     ACEs syntax: ace_type;ace_flags;rights;object_guid;inherit_object_guid;Trustee_SID;(resource_attribute)
+#     returns a dictionary containing the owner, group, dacl_flags (ACEs) and the Sacl_flags if there are any. https://learn.microsoft.com/en-us/windows/win32/ad/how-access-control-works-in-active-directory-domain-services
+#     https://itconnect.uw.edu/tools-services-support/it-systems-infrastructure/msinf/other-help/understanding-sddl-syntax/
+
+#     """
+
+#     split = re.split(r'[GDOS]:', sddl)[1:]
+#     try:
+#         result = {"owner": split[0], 'group': split[1], 'dacl_flags': split[2], 'sacl_flags': split[3]}
+#     except IndexError:
+#         try:
+#             result = {"owner": split[0], 'group': split[1], 'dacl_flags': split[2], 'sacl_flags': "Nil"}
+#         except:
+#             if not mds:
+#                 result = {"owner": split[0], 'group': split[1], 'dacl_flags': "Nil", 'sacl_flags': "Nil"}
+#                 return result
+#             else:
+#                 result = {"owner": split[0], 'group': "Nil", 'dacl_flags': split[1], 'sacl_flags': "Nil"}
+#     f_aces = result['dacl_flags'].split(')') # Grab the aces
+#     aces = []
+#     decrypted_aces = []
+#     if result['sacl_flags'] != "Nil":
+#         print(result['sacl_flags'])
+
+
+#     for ace in f_aces: # Format the aces for later use.
+#         ace = ace.replace('(', '')
+#         aces.append(ace)
+#     f_aces = []
+#     # NT_format: Ace_type, Flags, permissions, trustees, objectSID, SID
+#     for ace in aces:
+#         # ACE syntax: ace_type;ace_flags;rights;object_guid;inherit_object_guid;account_sid;(resource_attribute)
+#         componets = ace.split(';')
+
+#         if len(componets) < 5:
+#             continue
+#         ace_type = componets[0]
+#         flags = componets[1]
+#         rights = componets[2]
+#         guid = componets[3]
+#         inherit = componets[4]
+#         account_sid = componets[5]
+#         if rights.startswith("0x"):
+#             rights = rights[2:]
+#             rights = int(rights, 16) # convert into hex
+#         f_ace = {'type': ace_type, # ACE types
+#         'flags': flags, # Flags
+#         'rights': rights, # Rights
+#         'guid': guid, # Object GUID
+#         'inherit': inherit, # Inherit
+#         'trustee': account_sid} # SID trustee (SID of object being affected)
+#         ace_d = ace_type
+#         ace_f = ace_type
+#         described = ['Nil']
+#         for a in ace_f: # format the ACE type
+#             try:
+#                 d = constants.ACE_TYPES[a]
+#                 described.append(d)
+#                 ace_d = ace_d.replace(a, '')
+#                 if "Nil" in described:
+#                     described.remove('Nil')
+#             except:
+#                 None
+#         if ace_d != '':
+#             ace_d = [a + b for a, b in zip(ace_d[::2], ace_d[1::2])]
+#             for a in ace_d:
+#                 d = constants.ACE_TYPES[a]
+#                 described.append(d)
+#                 if "Nil" in described:
+#                     described.remove('Nil')
+#         f_ace['type'] = ', '.join(described) # end format of ACE type
+
+#         # format the ACE flags
+#         flags_d = flags
+#         flags_f = flags
+#         described = ["Nil"]
+#         flags_d = [a + b for a, b in zip(flags_d[::2], flags_d[1::2])]
+#         #print(flags_d)
+#         for a in flags_d:
+#             d = constants.ACE_FLAGS[a]
+#             described.append(d)
+#             if "Nil" in described:
+#                 described.remove('Nil')
+#         #print(described)
+#         f_ace['flags'] = ', '.join(described) # end format of ACE flags
+#         ks = list(constants.HEX_PERMISSIONS)
+
+#         described = ["Nil"]
+#         if type(rights) is int:
+#             for k in ks:
+#                 if rights & k != 0:
+#                     described.append(constants.HEX_PERMISSIONS[k])
+#                     if "Nil" in described:
+#                         described.remove('Nil')
+#         if type(rights) is str:
+#             rs = [a + b for a, b in zip(rights[::2], rights[1::2])]
+#             #print(rs)
+#             for r in rs:
+#                 described.append(constants.Nonhex_PERMISSIONS[r])
+#                 if "Nil" in described:
+#                     described.remove('Nil')
+
+
+#         description = ', '.join(described)
+
+
+#         f_ace['rights'] = description
+
+#         decrypted_aces.append(f_ace)
+#     for ace in decrypted_aces:
+#         keys = list(ace.keys())
+#         for key in keys:
+#             if len(ace[key]) < 1:
+#                 #print(len(ace[key]))
+#                 ace[key] = "Nil"
+#     keys = list(result.keys())
+#     for key in keys:
+#         l = len(result[key])
+#         if l < 1:
+#             result[key] = 'Nil'
+
+#     result['dacl_flags'] = decrypted_aces
+
+#     return result
 from datetime import datetime
 def decode_msds_group_msamembership_sddl(sddl_list):
     """

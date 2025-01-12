@@ -196,6 +196,11 @@ class Objeditor:
         except Exception as e:
             raise e
 
+    def edit_pass(self, obj_name:str, new_pass:str):
+        """ Change password of user or computer """
+        self.ldap.bloodymodify(obj_name, {"unicodePwd": [(Change.REPLACE.value, new_pass)]})
+        return {"name": obj_name, "new_pass": new_pass}
+
 
     def delete(self, obj):
         """ Delete computer, user, group, or any object """

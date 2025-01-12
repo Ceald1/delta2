@@ -781,6 +781,8 @@ def editobj(target: Target, kerb: Kerberos, ops: editor):
             data = objeditor.owner(target=target_obj, owner=source_account)
         elif action == "add_rbcd":
             data = objeditor.add_rbcd(target=target_obj, service=service)
+        elif action == "edit_pass":
+                data = objeditor.edit_pass(obj_name=target_obj, new_pass=new_pass)
         else:
             return {"response": f"error: action '{action}' not implemented in the API!"}
 
