@@ -798,7 +798,7 @@ class UpdateOBJ(BaseModel):
 
 
 # TODO: Add route for updating nodes on graph..
-@app.post("/ldap/update_graph")
+@app.post("/ldap/update_graph", tags=["ldap"])
 async def update_graph(target: Target, kerb: Kerberos, update: UpdateOBJ):
         """ Update an object on the graph by searching with ldap, obj_types  include: 
             "user", 
@@ -1614,7 +1614,7 @@ class ShadowCerts(BaseModel):
         kdcHost: str = ""
         target_account: str
 
-@app.post("/kerberos/shadow/auto", tags=['certs'])
+@app.post("/kerberos/shadow/auto", tags=['kerberos'])
 def auto_shadow(certs: ShadowCerts):
         dc_ip = certs.dc_ip
         domain = certs.domain

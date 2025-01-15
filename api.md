@@ -269,7 +269,7 @@ API documentation only contains working and documented routes
 
 - **URL**: `/kerberos/shadow/auto`
 - **Method**: `POST`
-- **Tags**: `certs`
+- **Tags**: `kerberos`
 - **Description**: Automatically shadow credentials.
 - **Request Body**:
   ```json
@@ -396,6 +396,35 @@ API documentation only contains working and documented routes
     "response": "string"
   }
   ```
+#### Update Object on the graph
+- **URL**: `/ldap/update_graph`
+- **Method**: `POST`
+- **Tags**: `ldap`
+- **Request Body**:
+  ```json
+  {
+    "target": {
+      "domain": "string",
+      "dc": "string",
+      "kerberos": "string",
+      "ldap_ssl": "string",
+      "user_name": "string",
+      "dc_ip": "string"
+    },
+    "kerb": {
+      "password": "string",
+      "user_hash": "string",
+      "aeskey": "string",
+      "get_hash": "string",
+      "kdcHost": "string"
+    },
+    "update": {
+    "target_object": "string",
+    "obj_type": "string"
+  }
+  }
+  ```
+
 
 ### Create Account
 Create a new LDAP account.
