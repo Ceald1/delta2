@@ -198,133 +198,7 @@ def describe_ace_flags(flags):
     
     return ', '.join(described)
 
-# def read_sddl(sddl:str, mds=None):
-#     """ Reads the SDDL
-#     SDDL syntax: O:owner_sidG:group_sidD:dacl_flags(string_ace1)(string_ace2)…(string_acen)S:sacl_flags(string_ace1)(string_ace2)…(string_acen)
-#     ACEs syntax: ace_type;ace_flags;rights;object_guid;inherit_object_guid;Trustee_SID;(resource_attribute)
-#     returns a dictionary containing the owner, group, dacl_flags (ACEs) and the Sacl_flags if there are any. https://learn.microsoft.com/en-us/windows/win32/ad/how-access-control-works-in-active-directory-domain-services
-#     https://itconnect.uw.edu/tools-services-support/it-systems-infrastructure/msinf/other-help/understanding-sddl-syntax/
 
-#     """
-
-#     split = re.split(r'[GDOS]:', sddl)[1:]
-#     try:
-#         result = {"owner": split[0], 'group': split[1], 'dacl_flags': split[2], 'sacl_flags': split[3]}
-#     except IndexError:
-#         try:
-#             result = {"owner": split[0], 'group': split[1], 'dacl_flags': split[2], 'sacl_flags': "Nil"}
-#         except:
-#             if not mds:
-#                 result = {"owner": split[0], 'group': split[1], 'dacl_flags': "Nil", 'sacl_flags': "Nil"}
-#                 return result
-#             else:
-#                 result = {"owner": split[0], 'group': "Nil", 'dacl_flags': split[1], 'sacl_flags': "Nil"}
-#     f_aces = result['dacl_flags'].split(')') # Grab the aces
-#     aces = []
-#     decrypted_aces = []
-#     if result['sacl_flags'] != "Nil":
-#         print(result['sacl_flags'])
-
-
-#     for ace in f_aces: # Format the aces for later use.
-#         ace = ace.replace('(', '')
-#         aces.append(ace)
-#     f_aces = []
-#     # NT_format: Ace_type, Flags, permissions, trustees, objectSID, SID
-#     for ace in aces:
-#         # ACE syntax: ace_type;ace_flags;rights;object_guid;inherit_object_guid;account_sid;(resource_attribute)
-#         componets = ace.split(';')
-
-#         if len(componets) < 5:
-#             continue
-#         ace_type = componets[0]
-#         flags = componets[1]
-#         rights = componets[2]
-#         guid = componets[3]
-#         inherit = componets[4]
-#         account_sid = componets[5]
-#         if rights.startswith("0x"):
-#             rights = rights[2:]
-#             rights = int(rights, 16) # convert into hex
-#         f_ace = {'type': ace_type, # ACE types
-#         'flags': flags, # Flags
-#         'rights': rights, # Rights
-#         'guid': guid, # Object GUID
-#         'inherit': inherit, # Inherit
-#         'trustee': account_sid} # SID trustee (SID of object being affected)
-#         ace_d = ace_type
-#         ace_f = ace_type
-#         described = ['Nil']
-#         for a in ace_f: # format the ACE type
-#             try:
-#                 d = constants.ACE_TYPES[a]
-#                 described.append(d)
-#                 ace_d = ace_d.replace(a, '')
-#                 if "Nil" in described:
-#                     described.remove('Nil')
-#             except:
-#                 None
-#         if ace_d != '':
-#             ace_d = [a + b for a, b in zip(ace_d[::2], ace_d[1::2])]
-#             for a in ace_d:
-#                 d = constants.ACE_TYPES[a]
-#                 described.append(d)
-#                 if "Nil" in described:
-#                     described.remove('Nil')
-#         f_ace['type'] = ', '.join(described) # end format of ACE type
-
-#         # format the ACE flags
-#         flags_d = flags
-#         flags_f = flags
-#         described = ["Nil"]
-#         flags_d = [a + b for a, b in zip(flags_d[::2], flags_d[1::2])]
-#         #print(flags_d)
-#         for a in flags_d:
-#             d = constants.ACE_FLAGS[a]
-#             described.append(d)
-#             if "Nil" in described:
-#                 described.remove('Nil')
-#         #print(described)
-#         f_ace['flags'] = ', '.join(described) # end format of ACE flags
-#         ks = list(constants.HEX_PERMISSIONS)
-
-#         described = ["Nil"]
-#         if type(rights) is int:
-#             for k in ks:
-#                 if rights & k != 0:
-#                     described.append(constants.HEX_PERMISSIONS[k])
-#                     if "Nil" in described:
-#                         described.remove('Nil')
-#         if type(rights) is str:
-#             rs = [a + b for a, b in zip(rights[::2], rights[1::2])]
-#             #print(rs)
-#             for r in rs:
-#                 described.append(constants.Nonhex_PERMISSIONS[r])
-#                 if "Nil" in described:
-#                     described.remove('Nil')
-
-
-#         description = ', '.join(described)
-
-
-#         f_ace['rights'] = description
-
-#         decrypted_aces.append(f_ace)
-#     for ace in decrypted_aces:
-#         keys = list(ace.keys())
-#         for key in keys:
-#             if len(ace[key]) < 1:
-#                 #print(len(ace[key]))
-#                 ace[key] = "Nil"
-#     keys = list(result.keys())
-#     for key in keys:
-#         l = len(result[key])
-#         if l < 1:
-#             result[key] = 'Nil'
-
-#     result['dacl_flags'] = decrypted_aces
-
-#     return result
 from datetime import datetime
 def decode_msds_group_msamembership_sddl(sddl_list):
     """
@@ -501,16 +375,6 @@ class Data_collection:
                 if type(kerberos) != bool:
                     kerberos = False
                 from argparse import Namespace
-                # args = Namespace(domain= self.domain,
-                # username = self.username,
-                # password = self.password,
-                # scheme = protocol,
-                # host= ip,
-                # kerberos = kerberos,
-                # secure=ldap_ssl,
-                # certificate=None,
-                # lmhash=lmhash,
-                # nthash=nthash)
                 if nthash:
                     password = f'{lmhash}:{nthash}'
                 host = dc
@@ -524,13 +388,8 @@ class Data_collection:
                     username=self.username,
                     password=password,
                     dcip=dc_ip,
-                    # lmhash=lmhash,
-                    # nthash=nthash,
                     kerberos=kerberos,
-                    # key=aeskey,
                 )
-                # ConnectionHandler(config=config)
-                # ad = ConnectionHandler(config=config)
                 ad =  NEW_ldap(cnf=config)
                 self.conn = ad
 
@@ -1096,6 +955,27 @@ class Data_collection:
             MATCH (d) WHERE d.objectSid = replace(a.name, "_", '-') MERGE (a)<-[:sid]-(d)
             """
             self.DB.custom_query(query=query, database=self.database)
+        
+        def update_node(self, target_object_DN:str, obj_type:str) -> None:
+            """ Update a node and its edges 
+                obj_type must either be "user", "group", "OU", "ReadGMSAPassword" """
+            old_root = self.root
+            self.root = target_object_DN
+            if obj_type == "user":
+                self.users()
+            elif obj_type == "group":
+                self.groups()
+            elif obj_type == "OU":
+                self.OUs()
+                self.connect_OUs()
+            elif obj_type == "ReadGMSAPassword":
+                self.ReadGMSAPassword()
+            else:
+                raise Exception("invalid obj_type")
+            self.route_ACEs()
+            self.route_others()
+            self.root = old_root
+            return None
 
 
 

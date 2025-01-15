@@ -1,7 +1,7 @@
 # Delta2
 ## By Ceald
 
-an active directory recon and exploitation tool that uses FastAPI for cloud possibilities and uses Impacket, memgraph graphing database, BloodyAD, and other scripts to ensure either exploitation, movement, or security in a domain, Delta2 itself is an API and not a full-on script, write your own scripts to interact with it so you're not a script kiddie 😉
+an active directory recon and exploitation tool that uses FastAPI for cloud possibilities and uses Impacket, Memgraph graphing database, BloodyAD, and other scripts to ensure either exploitation, movement, or security in a domain, Delta2 itself is an API and not a full-on script, write your own scripts to interact with it so you're not a script kiddie 😉, Disclaimer! Most AD CS code was copied from: https://github.com/ly4k/Certipy.git and modified to suit the API's needs and this tool is meant for educational purposes ONLY.
 
 
 ## Requirements

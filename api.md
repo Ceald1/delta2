@@ -323,7 +323,6 @@ API documentation only contains working and documented routes
   ```
 - **Response**: JSON response with collection status.
 
-Here is the modified markdown documentation to fit the new route and the updated class:
 
 #### Edit LDAP Object
 

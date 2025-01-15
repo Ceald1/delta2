@@ -792,6 +792,54 @@ def editobj(target: Target, kerb: Kerberos, ops: editor):
         print(traceback.format_exc())
         return {"response": f"error: {str(e)}"}
 
+class UpdateOBJ(BaseModel):
+        target_object: str
+        obj_type: str
+
+
+# TODO: Add route for updating nodes on graph..
+@app.post("/ldap/update_graph")
+async def update_graph(target: Target, kerb: Kerberos, update: UpdateOBJ):
+        """ Update an object on the graph by searching with ldap, obj_types  include: 
+            "user", 
+            "group", 
+            "OU", 
+            "ReadGMSAPassword", taget_object must be the DN for the object! """
+        domain = target.domain
+        username = target.user_name
+        password = kerb.password
+        dc = target.dc
+        dc_ip = target.dc_ip
+        db_location = uri
+        db_name = name
+        ntlm = kerb.user_hash
+        kdcHost = kerb.kdcHost
+        lm = ntlm.split(":")[0]
+        nt = ntlm.split(":")[-1]
+        e =  "nil"
+        aeskey = kerb.aeskey
+        kerberos_auth = target.kerberos
+        ldap_ssl = target.ldap_ssl
+        aeskey = aeskey.encode()
+        if kerberos_auth == "False":
+                kerberos_auth = None
+        else:
+                kerberos_auth = True
+        if ldap_ssl == "False":
+                ldap_ssl = False
+        else:
+                ldap_ssl = True
+        try:
+                collector = Data_collection(domain=domain, password=password, 
+        user_name=username,dc=dc, lmhash=lm,nthash=nt, kerberos=kerberos_auth, 
+        database_uri=uri,ldap_ssl=ldap_ssl, kdcHost=kdcHost, dc_ip=dc_ip)
+                collector.update_node(target_object_DN=update.target_object, obj_type=update.obj_type)
+        except Exception as e:
+                print(traceback.format_exc())
+                return {"response": str(e)}
+        
+
+
 
 class MSSQL(BaseModel):
         target_ip: str
