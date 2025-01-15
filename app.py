@@ -1000,7 +1000,7 @@ async def get_dirs(winrm_model: Winrm, target: Target, auth: Kerberos):
         else:
                 ssl = False
         try:
-                winrm_conn = WINRM(target_ip=smb_model.target_ip,domain=target.domain, user_name=target.user_name, password=auth.password, lmhash=lm,nthash=nt, kerberos=kerberos_auth, kdcHost=target.dc_ip, aeskey=auth.aeskey, dc_ip=target.dc_ip, dc=target.dc, ssl=ssl)
+                winrm_conn = WINRM(target_ip=winrm_model.target_ip,domain=target.domain, user_name=target.user_name, password=auth.password, lmhash=lm,nthash=nt, kerberos=kerberos_auth, kdcHost=target.dc_ip, aeskey=auth.aeskey, dc_ip=target.dc_ip, dc=target.dc, ssl=ssl)
                 output = winrm_conn.command(command)
                 return {"response": output}
         except Exception as e:
