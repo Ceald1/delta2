@@ -1566,7 +1566,7 @@ class ShadowCerts(BaseModel):
         kdcHost: str = ""
         target_account: str
 
-@app.post("/adcs/shadow/auto", tags=['certs'])
+@app.post("/kerberos/shadow/auto", tags=['certs'])
 def auto_shadow(certs: ShadowCerts):
         dc_ip = certs.dc_ip
         domain = certs.domain

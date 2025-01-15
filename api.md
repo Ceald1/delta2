@@ -265,6 +265,33 @@ API documentation only contains working and documented routes
   }
   ```
 - **Response**: JSON response with edited ticket data.
+#### Auto Shadow
+
+- **URL**: `/kerberos/shadow/auto`
+- **Method**: `POST`
+- **Tags**: `certs`
+- **Description**: Automatically shadow credentials.
+- **Request Body**:
+  ```json
+  {
+    "dc_ip": "string",
+    "domain": "string",
+    "username": "string",
+    "hashes": "string",
+    "password": "string",
+    "ns": "string",
+    "kerberos": "string",
+    "target_ip": "string",
+    "scheme": "string",
+    "kdcHost": "string",
+    "target_account": "string"
+  }
+  ```
+- **Response**: JSON response with status.
+
+
+
+
 
 ### LDAP
 
@@ -1021,26 +1048,3 @@ Each endpoint includes a try-except block to catch any exceptions that occur dur
   ```
 - **Response**: JSON response with status.
 
-#### Auto Shadow
-
-- **URL**: `/adcs/shadow/auto`
-- **Method**: `POST`
-- **Tags**: `certs`
-- **Description**: Automatically shadow a certificate.
-- **Request Body**:
-  ```json
-  {
-    "dc_ip": "string",
-    "domain": "string",
-    "username": "string",
-    "hashes": "string",
-    "password": "string",
-    "ns": "string",
-    "kerberos": "string",
-    "target_ip": "string",
-    "scheme": "string",
-    "kdcHost": "string",
-    "target_account": "string"
-  }
-  ```
-- **Response**: JSON response with status.

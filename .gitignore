@@ -22,3 +22,4 @@ app
 *.cert
 test.sh
 test*.*
+.mypy_cahce
