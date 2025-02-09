@@ -341,57 +341,58 @@ def format_dn(dn, name):
         return [groups[0]]
 
 class Data_collection:
-        def __init__(self, domain, user_name, dc, password='', lmhash="",nthash='', kerberos=False, database_uri='bolt://localhost:7687', ldap_ssl=False, kdcHost='', aeskey='', dc_ip=None, root=None, uri=None):
-                """ Collection script and class for delta2, gc stands for "Global Catalog connection" """
-                self.domain = domain
-                self.username= user_name
-                self.dc = dc
-                self.DB = DATABASE(database_uri)
-                if not kdcHost:
-                    self.kdchost = dc
-                else:
-                    self.kdchost = kdcHost
-                self.kdc = self.kdchost
-                if not dc_ip:
-                    dc_ip = socket.gethostbyname(dc)
-                self.password = password
-                self.database= 'memgraph'
-                self.kerberos = kerberos
-                self.dns = []
-                ldaplogin = '%s\\%s' % (self.domain, self.username)
-                data = self.domain.split('.')
-                self.root = ''
+        def __init__(self, domain, user_name, dc, password='', lmhash="", nthash='', kerberos=False, database_uri='bolt://localhost:7687', ldap_ssl=False, kdcHost='', aeskey='', dc_ip=None, root=None, uri=None):
+            """ Collection script and class for delta2, gc stands for "Global Catalog connection" """
+            self.domain = domain
+            self.username = user_name
+            self.dc = dc
+            self.DB = DATABASE(database_uri)
+            if not kdcHost:
+                self.kdchost = dc
+            else:
+                self.kdchost = kdcHost
+            self.kdc = self.kdchost
+            if not dc_ip:
+                dc_ip = socket.gethostbyname(dc)
+            self.password = password
+            self.database = 'memgraph'
+            self.kerberos = kerberos
+            self.dns = []
+            ldaplogin = '%s\\%s' % (self.domain, self.username)
+            data = self.domain.split('.')
+            self.root = ''
 
-                if ldap_ssl == True:
-                    protocol = 'ldaps'
-                else:
-                    protocol = 'ldap'
-                if root == None:
-                    for d in data:
-                            if self.root == '':
-                                    self.root = 'DC='+d
-                            else:
-                                    self.root = self.root + ',DC=' + d
-                if type(kerberos) != bool:
-                    kerberos = False
-                from argparse import Namespace
-                if nthash:
-                    password = f'{lmhash}:{nthash}'
-                host = dc
-                # if uri:
-                #     host = uri
-                print(host, flush=True)
-                config = Config(
-                    scheme=protocol,
-                    host=host,
-                    domain=self.domain,
-                    username=self.username,
-                    password=password,
-                    dcip=dc_ip,
-                    kerberos=kerberos,
-                )
-                ad =  NEW_ldap(cnf=config)
-                self.conn = ad
+            if ldap_ssl:
+                protocol = 'ldaps'
+            else:
+                protocol = 'ldap'
+            if root is None:
+                for d in data:
+                    if self.root == '':
+                        self.root = 'DC=' + d
+                    else:
+                        self.root = self.root + ',DC=' + d
+            if type(kerberos) != bool:
+                kerberos = False
+            from argparse import Namespace
+            if nthash:
+                password = f'{lmhash}:{nthash}'
+            host = dc
+            # if uri:
+            #     host = uri
+            print(f"dc: {dc}", flush=True)
+            print(f"host: {host}", flush=True)
+            config = Config(
+                scheme=protocol,
+                host=host,
+                domain=self.domain,
+                username=self.username,
+                password=password,
+                dcip=dc_ip,
+                kerberos=kerberos,
+            )
+            ad = NEW_ldap(cnf=config)
+            self.conn = ad
 
 
 
