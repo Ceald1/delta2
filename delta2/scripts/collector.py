@@ -726,11 +726,11 @@ class Data_collection:
             """
             Maps the Organizational Units that exist in memgraph.
             """
-            results = self.conn.search(search_base=self.root, search_filter='(&(objectClass=organizationalUnit)(objectCategory=*))', get_operational_attributes=True, attributes=PROPTERTIES+ ["objectGUID"], controls=sd_flags_control)
+            results = self.conn.search(search_base=self.root, search_filter='(&(objectClass=organizationalUnit)(objectCategory=*))', get_operational_attributes=True, attributes=PROPTERTIES+ ["objectGUID"], controls=sd_flags_control, search_scope=SUBTREE)
             for result in self.conn.entries:
                 data = result["attributes"]
                 keys = list(data.keys())
-                d = result.distinguishedName.value
+                d = data["distinguishedName"]
                 final = []
                 names = d.replace(self.root, '')
 
@@ -743,11 +743,11 @@ class Data_collection:
                     self.name = final[0]
                     connected_OUs = final[1:]
                     self.DB.add_node(name=self.name, t="OU", domain=self.domain,database=self.database, typ="OU")
-                    sid = data["objectGUID"][0]
+                    sid = data["objectGUID"]
                     self.DB.add_attributes_to_node(node_name=self.name, database=self.database, attribute_name='objectSid', attribute_info=sid, domain=self.domain)
                 for key in keys:
                     #print(f'{key}: {data[key]}')
-                    if len(data[key]) > 0:
+                    # if len(str(data[key])) > 0:
                         d_ = data[key]
                         if not isinstance(d_, list):
                             d_ = [str(d_)]

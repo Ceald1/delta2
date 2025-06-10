@@ -566,6 +566,7 @@ async def collect(target: Target, kerb: Kerberos):
                         try:
                                 collector.users()
                                 collector.groups()
+                                collector.OUs()
                                 collector.connect_OUs()
                                 collector.route_ACEs()
                                 collector.ReadGMSAPassword()

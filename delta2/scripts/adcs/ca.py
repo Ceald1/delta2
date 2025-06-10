@@ -2,6 +2,7 @@
 import copy
 import time
 from typing import List, Tuple
+import traceback
 
 from impacket.dcerpc.v5 import rpcrt, rrp, scmr
 from impacket.dcerpc.v5.dcom.oaut import VARIANT
@@ -392,16 +393,21 @@ class CA:
 
 
     def get_config(self) -> Tuple[int, int, int, CASecurity]:
+        e1 = None
         try:
             result = self.get_config_csra()
             return result
-        except Exception as e1:
-            e1 = e1
+        except Exception as e:
+            print('1  -----------------------')
+            print(traceback.format_exc())
+            e1 = e
         try:
 
             result = self.get_config_rrp()
             return result
         except Exception as e:
+            print("2 ------------------------")
+            print(traceback.format_exc())
             return (e, e1)
 
     def issue(self) -> bool:
