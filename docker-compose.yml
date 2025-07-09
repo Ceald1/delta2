@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: DOCKERFILE
+      network: host
     user: "root"
     privileged: true  # Enable privileged mode
     network_mode: "host"  # Use the host's network stack
